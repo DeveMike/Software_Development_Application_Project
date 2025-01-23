@@ -1,5 +1,8 @@
 const db = require('./database');
 const cardAccountRouter = require('./routes/card_account');
+const transactionRoutes = require('./routes/transaction');
+const accountRouter = require('./routes/account');
+const customerRouter = require('./routes/customer');
 const PORT = 3000;
 
 db.getConnection((err, connection) => {
@@ -30,6 +33,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/card', cardRouter);
 app.use('/card_account', cardAccountRouter);
+app.use('/transaction', transactionRoutes);
+app.use('/account', accountRouter);
+app.use('/customer', customerRouter);
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
