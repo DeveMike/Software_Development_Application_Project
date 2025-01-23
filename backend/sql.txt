@@ -1,3 +1,0 @@
-CREATE USER 'bankuser'@'127.0.0.1' IDENTIFIED BY 'bankuser';
-GRANT ALL ON `bank-automat`.* TO 'bankuser'@'127.0.0.1';
-
