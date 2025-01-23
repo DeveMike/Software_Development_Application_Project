@@ -3,7 +3,6 @@ const cardAccountRouter = require('./routes/card_account');
 const transactionRoutes = require('./routes/transaction');
 const accountRouter = require('./routes/account');
 const customerRouter = require('./routes/customer');
-const PORT = 3000;
 
 db.getConnection((err, connection) => {
   if (err) {
@@ -36,9 +35,5 @@ app.use('/card_account', cardAccountRouter);
 app.use('/transaction', transactionRoutes);
 app.use('/account', accountRouter);
 app.use('/customer', customerRouter);
-
-app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
-});
 
 module.exports = app;
