@@ -1,6 +1,8 @@
 const db = require('./database');
 const cardAccountRouter = require('./routes/card_account');
-const PORT = 3000;
+const transactionRoutes = require('./routes/transaction');
+const accountRouter = require('./routes/account');
+const customerRouter = require('./routes/customer');
 
 db.getConnection((err, connection) => {
   if (err) {
@@ -30,9 +32,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/card', cardRouter);
 app.use('/card_account', cardAccountRouter);
-
-app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
-});
+app.use('/transaction', transactionRoutes);
+app.use('/account', accountRouter);
+app.use('/customer', customerRouter);
 
 module.exports = app;
