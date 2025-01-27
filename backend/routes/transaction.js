@@ -13,9 +13,20 @@ router.get('/', function(req, res) {
   });
 });
 
-// Get one
-router.get('/:idaccount', function(req, res) {
+// Get all by account
+router.get('/account/:idaccount', function(req, res) {
   transaction.getByAccountId(req.params.idaccount, function(err, result) {
+    if (err) {
+      res.status(500).json(err);
+    } else {
+      res.json(result);
+    }
+  });
+});
+
+// Get one by transaction ID
+router.get('/transaction/:idtransaction', function(req, res) {
+  transaction.getByTransactionId(req.params.idtransaction, function(err, result) {
     if (err) {
       res.status(500).json(err);
     } else {

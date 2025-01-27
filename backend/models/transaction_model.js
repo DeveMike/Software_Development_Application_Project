@@ -4,6 +4,9 @@ const transaction = {
   getAll: function(callback) {
     return db.query('SELECT * FROM transaction', callback);
   },
+  getByTransactionId: function(idtransaction, callback) {
+    return db.query('SELECT * FROM transaction WHERE idtransaction=?', [idtransaction], callback);
+  },
   getByAccountId: function(idaccount, callback) {
     return db.query('SELECT * FROM transaction WHERE idaccount=?', [idaccount], callback);
   },
