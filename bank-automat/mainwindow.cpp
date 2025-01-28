@@ -1,3 +1,4 @@
+#include "login.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -12,3 +13,10 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+void MainWindow::on_btnStart_clicked()
+{
+    Login *objLogin=new Login(this);
+    objLogin->open();
+}
+
