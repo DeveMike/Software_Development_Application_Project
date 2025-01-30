@@ -1,4 +1,4 @@
-#include "enviroment.h"
+#include "environment.h"
 #include "login.h"
 #include "ui_login.h"
 
@@ -58,3 +58,7 @@ void Login::LoginSlot(QNetworkReply *reply)
     postManager->deleteLater();
 }
 
+void Login::closeEvent(QCloseEvent *)
+{
+    QApplication::quit(); // Sammuttaa koko sovelluksen
+}
