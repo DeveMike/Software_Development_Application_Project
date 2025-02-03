@@ -1,5 +1,6 @@
 #include "environment.h"
 #include "login.h"
+#include "mainmenu.h"
 #include "ui_login.h"
 
 Login::Login(QWidget *parent)
@@ -20,7 +21,7 @@ void Login::on_btnLogin_clicked()
     jsonObj.insert("idcard",ui->numberIdcard->text());
     jsonObj.insert("pin",ui->numberPin->text());
 
-    QString site_url=Enviroment::base_url()+"/login";
+    QString site_url=Environment::base_url()+"/login";
     QNetworkRequest request(site_url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     postManager = new QNetworkAccessManager(this);
@@ -46,7 +47,11 @@ void Login::LoginSlot(QNetworkReply *reply)
         else{
             if(response_data!="false" && response_data.length()>20){
                 ui->labelInfo->setText("Kirjautuminen OK!");
-
+                QByteArray myToken= "Bearer "+ response_data;
+                MainMenu *objMainMenu= new MainMenu(this);
+                objMainMenu->setUsername(ui->numberIdcard->text());
+                objMainMenu->setMyToken(myToken);
+                objMainMenu->open();
             }
             else{
                 ui->labelInfo->setText("Väärä ID/PIN");

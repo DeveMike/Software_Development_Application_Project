@@ -4,10 +4,10 @@
 #include <qstring.h>
 
 
-class Enviroment
+class Environment
 {
 public:
-    Enviroment();
+    Environment();
     static QString base_url();
 
 };
