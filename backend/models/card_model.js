@@ -7,7 +7,7 @@ const card = {
   },
 
   getById: function (id, callback) {
-    return db.query('SELECT * FROM card WHERE idcard = ?', [id], callback);
+    return db.query('SELECT * FROM customer WHERE idcustomer = ?', [id], callback);
   },
 
   add: function (cardData, callback) {
