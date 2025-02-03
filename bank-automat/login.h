@@ -22,6 +22,8 @@ private slots:
     void on_btnLogin_clicked();
     void LoginSlot (QNetworkReply *reply);
 
+protected:
+    void closeEvent(QCloseEvent *) override; // tämä sulkee sovellusken (kaikki ikkunat) kun käyttäjä painaa ruksista.
 
 private:
     Ui::Login *ui;

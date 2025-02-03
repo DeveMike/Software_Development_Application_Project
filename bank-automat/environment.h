@@ -1,5 +1,5 @@
-#ifndef ENVIROMENT_H
-#define ENVIROMENT_H
+#ifndef ENVIRONMENT_H
+#define ENVIRONMENT_H
 
 #include <qstring.h>
 
@@ -12,4 +12,4 @@ public:
 
 };
 
-#endif // ENVIROMENT_H
+#endif // ENVIRONMENT_H

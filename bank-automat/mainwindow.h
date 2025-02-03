@@ -20,6 +20,9 @@ public:
 private slots:
     void on_btnStart_clicked();
 
+protected:
+    void closeEvent(QCloseEvent *) override; // tämä sulkee sovellusken (kaikki ikkunat) kun käyttäjä painaa ruksista.
+
 private:
     Ui::MainWindow *ui;
 };
