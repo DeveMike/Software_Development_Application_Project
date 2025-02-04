@@ -21,15 +21,20 @@ public:
 private slots:
     void on_btnLogin_clicked();
     void LoginSlot (QNetworkReply *reply);
+    void on_btnLangFI_clicked();
+    void on_btnLangSWE_clicked();
+    void on_btnLangENG_clicked();
 
 protected:
-    void closeEvent(QCloseEvent *) override; // tämä sulkee sovellusken (kaikki ikkunat) kun käyttäjä painaa ruksista.
+    void closeEvent(QCloseEvent *) override;
 
 private:
     Ui::Login *ui;
     QNetworkAccessManager *postManager;
     QNetworkReply *reply;
     QByteArray response_data;
+    QString selectedLanguage = "FI";
+    void updateLanguage();
 };
 
 #endif // LOGIN_H
