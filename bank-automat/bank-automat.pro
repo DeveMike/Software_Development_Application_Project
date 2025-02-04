@@ -12,6 +12,7 @@ CONFIG += c++17
 
 SOURCES += \
     balance.cpp \
+    cardmode.cpp \
     customerdata.cpp \
     environment.cpp \
     login.cpp \
@@ -23,6 +24,7 @@ SOURCES += \
 
 HEADERS += \
     balance.h \
+    cardmode.h \
     customerdata.h \
     environment.h \
     login.h \
@@ -33,6 +35,7 @@ HEADERS += \
 
 FORMS += \
     balance.ui \
+    cardmode.ui \
     customerdata.ui \
     login.ui \
     mainmenu.ui \

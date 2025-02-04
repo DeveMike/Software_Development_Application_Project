@@ -22,6 +22,7 @@ public:
     void setMyToken(const QByteArray &newMyToken);
     QByteArray getMyToken() const;
     void setLanguage(const QString &newLanguage);
+    void setCardMode(const QString &mode);
 
 private slots:
     void on_btnData_clicked();
@@ -41,6 +42,7 @@ private:
     QByteArray myToken;
     QString getLanguage() const;
     QString selectedLanguage;
+    QString mCardMode;
     QNetworkAccessManager *dataManager = nullptr;
 };
 

@@ -28,6 +28,11 @@ void MainMenu::setMyToken(const QByteArray &newMyToken)
     qDebug()<<myToken;
 }
 
+void MainMenu::setCardMode(const QString &mode)
+{
+    mCardMode = mode;  // Debit/Credit
+}
+
 void MainMenu::setUsername(const QString &newUsername)
 {
     idcard = newUsername;
