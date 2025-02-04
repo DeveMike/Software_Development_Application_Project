@@ -50,6 +50,7 @@ void CardMode::on_btnDebit_clicked()
     objMainMenu->setLanguage(mLanguage);
     objMainMenu->setMyToken(mToken.toUtf8());
     objMainMenu->setUsername(mUsername);
+    objMainMenu->setCardMode("debit");
     objMainMenu->show();
     connect(objMainMenu, &MainMenu::finished, this, &CardMode::show);
 }
@@ -62,6 +63,7 @@ void CardMode::on_btnCredit_clicked()
     objMainMenu->setLanguage(mLanguage);
     objMainMenu->setMyToken(mToken.toUtf8());
     objMainMenu->setUsername(mUsername);
+    objMainMenu->setCardMode("credit");
     objMainMenu->show();
     connect(objMainMenu, &MainMenu::finished, this, &CardMode::show);
 }

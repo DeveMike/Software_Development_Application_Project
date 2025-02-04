@@ -142,6 +142,9 @@ void MainMenu::on_btnWithdraw_clicked()
     this->hide();
     WithdrawWindow *objWithdrawWindow = new WithdrawWindow(this);
     objWithdrawWindow->setGeometry(this->geometry());
+    objWithdrawWindow->setMyToken(myToken);
+    objWithdrawWindow->setIdcard(idcard);
+    objWithdrawWindow->setCardMode(mCardMode);
     objWithdrawWindow->setLanguage(selectedLanguage);
     objWithdrawWindow->show();
     connect(objWithdrawWindow, &WithdrawWindow::finished, this, &MainMenu::show);

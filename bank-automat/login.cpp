@@ -127,17 +127,19 @@ void Login::cardSlot(QNetworkReply *reply)
         if (cardType == "dual") {
             CardMode *objCardMode = new CardMode(this);
             objCardMode->setGeometry(this->geometry());
-            objCardMode->setLanguage(selectedLanguage);
             objCardMode->setUsername(ui->numberIdcard->text());
             objCardMode->setMyToken(myToken);
+            objCardMode->setLanguage(selectedLanguage);
             objCardMode->show();
             connect(objCardMode, &CardMode::finished, this, &Login::show);
+
         } else {
             MainMenu *objMainMenu = new MainMenu(this);
             objMainMenu->setGeometry(this->geometry());
             objMainMenu->setMyToken(myToken.toUtf8());
             objMainMenu->setUsername(ui->numberIdcard->text());
             objMainMenu->setLanguage(selectedLanguage);
+            objMainMenu->setCardMode("debit");
             objMainMenu->show();
             connect(objMainMenu, &MainMenu::finished, this, &Login::show);
         }
