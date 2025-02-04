@@ -1,8 +1,8 @@
 #include "environment.h"
 
-Enviroment::Enviroment() {}
+Environment::Environment() {}
 
-QString Enviroment::base_url()
+QString Environment::base_url()
 {
     return"http://localhost:3000";
 }
