@@ -8,6 +8,7 @@ CardMode::CardMode(QWidget *parent) :
     ui(new Ui::CardMode)
 {
     ui->setupUi(this);
+    this->setWindowTitle("ATM");
 }
 
 CardMode::~CardMode()
