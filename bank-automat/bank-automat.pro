@@ -1,6 +1,7 @@
 QT       += core gui
 QT +=network
 
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -10,25 +11,34 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    balance.cpp \
     customerdata.cpp \
     environment.cpp \
     login.cpp \
     main.cpp \
     mainmenu.cpp \
-    mainwindow.cpp
+    transaction.cpp \
+    transfer.cpp \
+    withdraw.cpp
 
 HEADERS += \
+    balance.h \
     customerdata.h \
     environment.h \
     login.h \
     mainmenu.h \
-    mainwindow.h
+    transaction.h \
+    transfer.h \
+    withdraw.h
 
 FORMS += \
+    balance.ui \
     customerdata.ui \
     login.ui \
     mainmenu.ui \
-    mainwindow.ui
+    transaction.ui \
+    transfer.ui \
+    withdraw.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

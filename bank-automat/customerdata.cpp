@@ -8,6 +8,7 @@ CustomerData::CustomerData(QWidget *parent) :
     ui(new Ui::CustomerData)
 {
     ui->setupUi(this);
+    this->setWindowTitle("ATM");
 }
 
 CustomerData::~CustomerData()
@@ -23,15 +24,44 @@ void CustomerData::setIdcard(const QString &newIdcard) {
     idcard = newIdcard;
 }
 
+void CustomerData::setLanguage(const QString &newLanguage) {
+    selectedLanguage = newLanguage;
+    updateLanguage();
+}
+
+void CustomerData::updateLanguage()
+{
+    if (selectedLanguage == "FI") {
+        ui->labelData->setText("Asiakastiedot:");
+        ui->labelID->setText("Asiakas ID:");
+        ui->labelData_3->setText("Etunimi:");
+        ui->labelData_2->setText("Sukunimi:");
+        ui->btnBack->setText("Takaisin");
+    }
+    else if (selectedLanguage == "SWE") {
+        ui->labelData->setText("Kunduppgifter:");
+        ui->labelID->setText("Kund ID:");
+        ui->labelData_3->setText("Förnamn:");
+        ui->labelData_2->setText("Efternamn:");
+        ui->btnBack->setText("Tillbaka");
+    }
+    else if (selectedLanguage == "ENG") {
+        ui->labelData->setText("Customer Data:");
+        ui->labelID->setText("Customer ID:");
+        ui->labelData_3->setText("First Name:");
+        ui->labelData_2->setText("Last Name:");
+        ui->btnBack->setText("Back");
+    }
+}
 
 void CustomerData::showEvent(QShowEvent *event)
 {
     QString site_url = Environment::base_url() + "/card/" + idcard;
     QNetworkRequest request(site_url);
 
-    //WEBTOKEN ALKU
+    //WEBTOKEN START
     request.setRawHeader(QByteArray("Authorization"), myToken);
-    //WEBTOKEN LOPPU
+    //WEBTOKEN END
     dataManager = new QNetworkAccessManager(this);
 
     connect(dataManager, &QNetworkAccessManager::finished, this, &CustomerData::showDataSlot);
@@ -41,30 +71,54 @@ void CustomerData::showEvent(QShowEvent *event)
     QDialog::showEvent(event);
 }
 
-
 void CustomerData::showDataSlot(QNetworkReply *reply)
 {
-
     response_data = reply->readAll();
-    qDebug() << response_data;
+    qDebug() << "Received data: " << response_data;
 
     QJsonDocument json_doc = QJsonDocument::fromJson(response_data);
     QJsonObject json_obj = json_doc.object();
 
-    // QString myData;
-    // // idcustomer muutetaan kokonaisluvuksi ja sitten merkkijonoksi
-    // myData += QString::number(json_obj["idcustomer"].toInt()) + " " + json_obj["fname"].toString() + " " + json_obj["lname"].toString();
-    // ui->labelData->setText(myData);
+    int customerId = json_obj["idcustomer"].toInt();
+    ui->labelID->setText(QString::number(customerId));
 
-    ui->labelID->setText(QString::number(json_obj["idcustomer"].toInt()));
-    ui->labelFname->setText(json_obj["fname"].toString());
-    ui->labelLname->setText(json_obj["lname"].toString());
+    QString site_url = Environment::base_url() + "/customer/" + QString::number(customerId);
+    QNetworkRequest request(site_url);
+    request.setRawHeader(QByteArray("Authorization"), myToken);
 
+    QNetworkAccessManager *customerDataManager = new QNetworkAccessManager(this);
+    connect(customerDataManager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *customerReply) {
+        QByteArray customerData = customerReply->readAll();
+        qDebug() << "Customer information: " << customerData;
 
+        QJsonDocument customerJsonDoc = QJsonDocument::fromJson(customerData);
+        QJsonObject customerJsonObj = customerJsonDoc.object();
+
+        ui->labelFname->setText(customerJsonObj["fname"].toString());
+        ui->labelLname->setText(customerJsonObj["lname"].toString());
+
+        customerReply->deleteLater();
+        customerDataManager->deleteLater();
+    });
+
+    customerDataManager->get(request);
 
     reply->deleteLater();
     dataManager->deleteLater();
 }
 
+void CustomerData::on_btnBack_clicked()
+{
+    this->hide();
+    QWidget *mainMenu = parentWidget();
 
+    if (mainMenu) {
+        mainMenu->show();
+    }
+}
+
+void CustomerData::closeEvent(QCloseEvent *)
+{
+    QApplication::quit();
+}
 
