@@ -10,18 +10,60 @@
 #include <QCloseEvent>
 #include <QDebug>
 
-Login::Login(QWidget *parent)
+Login::Login(MainWindow *mainWin, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::Login)
+    , mainWindow(mainWin)
 {
     ui->setupUi(this);
     this->setWindowTitle("ATM");
-    updateLanguage();
+
+    inactivityTimer = new QTimer(this);
+    connect(inactivityTimer, &QTimer::timeout, this, &Login::checkInactivity);
+
+    qApp->installEventFilter(this);
 }
 
 Login::~Login()
 {
     delete ui;
+}
+
+void Login::showEvent(QShowEvent *event)
+{
+    inactivityTimer->start(10000);
+    QDialog::showEvent(event);
+}
+
+void Login::hideEvent(QHideEvent *event)
+{
+    inactivityTimer->stop();
+    inactivityTimer->setInterval(10000);
+    QDialog::hideEvent(event);
+}
+
+bool Login::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::MouseMove)
+    {
+        inactivityTimer->start(10000);
+    }
+    return QDialog::eventFilter(obj, event);
+}
+
+void Login::checkInactivity()
+{
+    if (!this->isVisible())
+    {
+        inactivityTimer->stop();
+        return;
+    }
+
+    this->hide();
+    if (mainWindow)
+    {
+        mainWindow->show();
+    }
 }
 
 void Login::on_btnLogin_clicked()

@@ -183,9 +183,9 @@ void MainMenu::on_btnTransaction_clicked()
 void MainMenu::on_btnLogout_clicked()
 {
     this->hide();
-    Login *loginWindow = new Login();
-    loginWindow->setGeometry(this->geometry());
-    loginWindow->show();
+    MainWindow *objMainWindow = new MainWindow(this);
+    objMainWindow->setGeometry(this->geometry());
+    objMainWindow->show();
 }
 
 void MainMenu::closeEvent(QCloseEvent *)
