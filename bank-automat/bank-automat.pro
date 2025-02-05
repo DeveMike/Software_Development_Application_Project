@@ -18,6 +18,7 @@ SOURCES += \
     login.cpp \
     main.cpp \
     mainmenu.cpp \
+    mainwindow.cpp \
     transaction.cpp \
     transfer.cpp \
     withdraw.cpp
@@ -29,6 +30,7 @@ HEADERS += \
     environment.h \
     login.h \
     mainmenu.h \
+    mainwindow.h \
     transaction.h \
     transfer.h \
     withdraw.h
@@ -39,6 +41,7 @@ FORMS += \
     customerdata.ui \
     login.ui \
     mainmenu.ui \
+    mainwindow.ui \
     transaction.ui \
     transfer.ui \
     withdraw.ui
