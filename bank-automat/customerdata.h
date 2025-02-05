@@ -2,10 +2,11 @@
 #define CUSTOMERDATA_H
 
 #include <QDialog>
-#include <QDialog>
 #include <QtNetwork>
 #include <QNetworkAccessManager>
 #include <QJsonDocument>
+#include <QFileDialog>       // tarvitaan tiedostonvalintaa varten
+#include <QHttpMultiPart>    // tarvitaan multi-part lähetykseen
 
 namespace Ui {
 class CustomerData;
@@ -25,9 +26,12 @@ public:
 private slots:
     void showDataSlot(QNetworkReply *reply);
     void on_btnBack_clicked();
+    void onThumbnailDownloaded(QNetworkReply *reply);       // Uusi slot: käsittelee ladatun kuvan
+    void onUploadThumbnailFinished(QNetworkReply *reply);     // Uusi slot: käsittelee lähetyksen vastauksen
+    void onBtnUploadThumbnailClicked();                       // Uusi slot: painikkeen klikkaus
 
 protected:
-    void showEvent(QShowEvent *event);
+    void showEvent(QShowEvent *) override;
     void closeEvent(QCloseEvent *) override;
 
 private:
@@ -40,6 +44,15 @@ private:
     QNetworkReply *reply;
     QByteArray response_data;
     void updateLanguage();
+
+    // Uudet jäsenmuuttujat profiilikuvan toiminnallisuutta varten
+    int customerId; // tallentaa asiakkaan id:n
+    QNetworkAccessManager *thumbnailManager;
+    QNetworkAccessManager *uploadManager;
+
+    // Uudet funktiot profiilikuvan latausta ja lähettämistä varten
+    void loadUserThumbnail(int userId);
+    void uploadNewThumbnail(int userId, QString filePath);
 };
 
 #endif // CUSTOMERDATA_H
