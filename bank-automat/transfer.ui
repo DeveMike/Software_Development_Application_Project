@@ -16,14 +16,27 @@
   <widget class="QPushButton" name="btnBack">
    <property name="geometry">
     <rect>
-     <x>530</x>
-     <y>370</y>
-     <width>100</width>
-     <height>32</height>
+     <x>450</x>
+     <y>240</y>
+     <width>131</width>
+     <height>61</height>
     </rect>
    </property>
    <property name="text">
     <string>Takaisin</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="buttonTransfer">
+   <property name="geometry">
+    <rect>
+     <x>210</x>
+     <y>240</y>
+     <width>131</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Transfer</string>
    </property>
   </widget>
  </widget>
