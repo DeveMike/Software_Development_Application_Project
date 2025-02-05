@@ -21,6 +21,7 @@ public:
 private slots:
     void on_btnLogin_clicked();
     void LoginSlot (QNetworkReply *reply);
+    void cardSlot(QNetworkReply *reply);
     void on_btnLangFI_clicked();
     void on_btnLangSWE_clicked();
     void on_btnLangENG_clicked();
@@ -35,6 +36,8 @@ private:
     QByteArray response_data;
     QString selectedLanguage = "FI";
     void updateLanguage();
+    QString myToken;
+    QNetworkAccessManager *getCardManager;
 };
 
 #endif // LOGIN_H
