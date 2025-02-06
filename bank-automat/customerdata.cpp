@@ -2,13 +2,26 @@
 #include "environment.h"
 #include "ui_customerdata.h"
 #include <QDebug>
+#include <QFileDialog>
+#include <QHttpMultiPart>
+#include <QFile>
+#include <QPixmap>
+#include <QFileInfo>
+#include <QApplication>
 
 CustomerData::CustomerData(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CustomerData)
+    ui(new Ui::CustomerData),
+    customerId(0),
+    thumbnailManager(new QNetworkAccessManager(this)),
+    uploadManager(new QNetworkAccessManager(this))
 {
     ui->setupUi(this);
     this->setWindowTitle("ATM");
+
+    connect(thumbnailManager, &QNetworkAccessManager::finished, this, &CustomerData::onThumbnailDownloaded);
+    connect(uploadManager, &QNetworkAccessManager::finished, this, &CustomerData::onUploadThumbnailFinished);
+    connect(ui->btnUploadThumbnail, &QPushButton::clicked, this, &CustomerData::onBtnUploadThumbnailClicked);
 }
 
 CustomerData::~CustomerData()
@@ -37,6 +50,7 @@ void CustomerData::updateLanguage()
         ui->labelData_3->setText("Etunimi:");
         ui->labelData_2->setText("Sukunimi:");
         ui->btnBack->setText("Takaisin");
+        ui->btnUploadThumbnail->setText("Vaihda kuva");
     }
     else if (selectedLanguage == "SWE") {
         ui->labelData->setText("Kunduppgifter:");
@@ -44,6 +58,7 @@ void CustomerData::updateLanguage()
         ui->labelData_3->setText("Förnamn:");
         ui->labelData_2->setText("Efternamn:");
         ui->btnBack->setText("Tillbaka");
+        ui->btnUploadThumbnail->setText("Byt bild");
     }
     else if (selectedLanguage == "ENG") {
         ui->labelData->setText("Customer Data:");
@@ -51,6 +66,7 @@ void CustomerData::updateLanguage()
         ui->labelData_3->setText("First Name:");
         ui->labelData_2->setText("Last Name:");
         ui->btnBack->setText("Back");
+        ui->btnUploadThumbnail->setText("Change image");
     }
 }
 
@@ -79,10 +95,13 @@ void CustomerData::showDataSlot(QNetworkReply *reply)
     QJsonDocument json_doc = QJsonDocument::fromJson(response_data);
     QJsonObject json_obj = json_doc.object();
 
-    int customerId = json_obj["idcustomer"].toInt();
-    ui->labelID->setText(QString::number(customerId));
+    int id = json_obj["idcustomer"].toInt();
+    customerId = id;
+    ui->labelID->setText(QString::number(id));
 
-    QString site_url = Environment::base_url() + "/customer/" + QString::number(customerId);
+    loadUserThumbnail(id);
+
+    QString site_url = Environment::base_url() + "/customer/" + QString::number(id);
     QNetworkRequest request(site_url);
     request.setRawHeader(QByteArray("Authorization"), myToken);
 
@@ -107,6 +126,86 @@ void CustomerData::showDataSlot(QNetworkReply *reply)
     dataManager->deleteLater();
 }
 
+void CustomerData::loadUserThumbnail(int userId)
+{
+    QUrl url(Environment::base_url() + "/customer/getThumbnail?userId=" + QString::number(userId));
+    QNetworkRequest request(url);
+    request.setRawHeader(QByteArray("Authorization"), myToken);
+    thumbnailManager->get(request);
+}
+
+void CustomerData::onThumbnailDownloaded(QNetworkReply *reply)
+{
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray imageData = reply->readAll();
+        QPixmap pixmap;
+        if (pixmap.loadFromData(imageData)) {
+            ui->lblThumbnail->setPixmap(pixmap.scaled(128, 128, Qt::KeepAspectRatio));
+            qDebug() << "Thumbnail downloaded successfully!";
+        } else {
+            qDebug() << "Failed to load the image.";
+        }
+    } else {
+        qDebug() << "Error downloading the thumbnail:" << reply->errorString();
+    }
+    reply->deleteLater();
+}
+
+void CustomerData::uploadNewThumbnail(int userId, QString filePath)
+{
+    QUrl apiUrl(Environment::base_url() + "/customer/thumbnail");
+    QNetworkRequest request(apiUrl);
+    request.setRawHeader(QByteArray("Authorization"), myToken);
+
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+
+    QHttpPart userIdPart;
+    userIdPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"userId\""));
+    userIdPart.setBody(QString::number(userId).toUtf8());
+    multiPart->append(userIdPart);
+
+    QFile *file = new QFile(filePath);
+    if (!file->open(QIODevice::ReadOnly)) {
+        qDebug() << "Failed to open the file.";
+        delete file;
+        multiPart->deleteLater();
+        return;
+    }
+
+    QHttpPart imagePart;
+    imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("image/jpeg"));
+    QFileInfo fileInfo(file->fileName());
+    QString fileName = fileInfo.fileName();
+    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"thumbnail\"; filename=\"" + fileName + "\""));
+    imagePart.setBodyDevice(file);
+    file->setParent(multiPart);
+    multiPart->append(imagePart);
+
+    QNetworkReply *reply = uploadManager->post(request, multiPart);
+    multiPart->setParent(reply);
+}
+
+void CustomerData::onUploadThumbnailFinished(QNetworkReply *reply)
+{
+    if (reply->error() == QNetworkReply::NoError) {
+        qDebug() << "Thumbnail upload successful!";
+        if (customerId != 0) {
+            loadUserThumbnail(customerId);
+        }
+    } else {
+        qDebug() << "Error uploading thumbnail:" << reply->errorString();
+    }
+    reply->deleteLater();
+}
+
+void CustomerData::onBtnUploadThumbnailClicked()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, "Select Image", "", "Images (*.png *.jpg *.jpeg)");
+    if (!filePath.isEmpty() && customerId != 0) {
+        uploadNewThumbnail(customerId, filePath);
+    }
+}
+
 void CustomerData::on_btnBack_clicked()
 {
     this->hide();
@@ -121,4 +220,3 @@ void CustomerData::closeEvent(QCloseEvent *)
 {
     QApplication::quit();
 }
-

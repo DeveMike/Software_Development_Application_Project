@@ -12,8 +12,8 @@ router.get('/', (req, res) => {
   });
 });
 
-router.get('/:idcustomer', (req, res) => {
-  const id = req.params.idcustomer;
+router.get('/:id', (req, res) => {
+  const id = req.params.id;
   cardModel.getById(id, (err, result) => {
     if (err) {
       res.status(500).json({ error: err.message });
