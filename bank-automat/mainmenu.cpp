@@ -165,6 +165,8 @@ void MainMenu::on_btnBalance_clicked()
     this->hide();
     BalanceWindow *objBalanceWindow = new BalanceWindow(this);
     objBalanceWindow->setGeometry(this->geometry());
+    objBalanceWindow->setAuthToken(myToken);
+    objBalanceWindow->setIdCard(idcard);
     objBalanceWindow->setLanguage(selectedLanguage);
     objBalanceWindow->show();
     connect(objBalanceWindow, &BalanceWindow::finished, this, &MainMenu::show);
