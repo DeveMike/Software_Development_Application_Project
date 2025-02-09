@@ -30,16 +30,25 @@ void CardMode::setLanguage(const QString &lang)
     mLanguage = lang;
 
     if (mLanguage == "ENG") {
-        ui->btnDebit->setText("Debit");
-        ui->btnCredit->setText("Credit");
+        ui->txtDebit->setText("Debit");
+        ui->txtCredit->setText("Credit");
     }
     else if (mLanguage == "SWE") {
-        ui->btnDebit->setText("Debet");
-        ui->btnCredit->setText("Kredit");
+        ui->txtDebit->setText("Debet");
+        ui->txtCredit->setText("Kredit");
     }
     else {
-        ui->btnDebit->setText("Debit");
-        ui->btnCredit->setText("Credit");
+        ui->txtDebit->setText("Debit");
+        ui->txtCredit->setText("Credit");
+    }
+}
+
+void CardMode::on_btnBack_clicked()
+{
+    this->hide();
+    QWidget *parent = parentWidget();
+    if (parent) {
+        parent->show();
     }
 }
 

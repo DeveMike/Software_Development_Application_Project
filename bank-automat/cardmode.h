@@ -22,6 +22,7 @@ public:
 private slots:
     void on_btnDebit_clicked();
     void on_btnCredit_clicked();
+    void on_btnBack_clicked();
 
 protected:
     void closeEvent(QCloseEvent *) override;

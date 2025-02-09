@@ -28,6 +28,8 @@ private slots:
     void on_btnLangFI_clicked();
     void on_btnLangSWE_clicked();
     void on_btnLangENG_clicked();
+    void on_btn_Stop_clicked();
+    void onDigitButtonClicked();
 
 protected:
     void closeEvent(QCloseEvent *) override;

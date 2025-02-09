@@ -26,12 +26,16 @@ public:
 private slots:
     void onWithdrawalResponse(QNetworkReply *reply, int amount);
     void on_btnBack_clicked();
+    void on_btnBack_2_clicked();
     void on_buttonOut_20_clicked();
     void on_buttonOut_40_clicked();
     void on_buttonOut_50_clicked();
     void on_buttonOut_80_clicked();
     void on_buttonOut_100_clicked();
     void on_buttonOut_x_clicked();
+    void onDigitButtonClicked();
+    void on_btnOK_clicked();
+    void hideCustomAmountInput();
 
 protected:
     void closeEvent(QCloseEvent *) override;
