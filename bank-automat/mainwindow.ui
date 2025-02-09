@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>880</width>
+    <height>640</height>
    </rect>
   </property>
   <property name="mouseTracking">
@@ -16,14 +16,49 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog, QWidget {
+    background-color: #121826;
+}
+</string>
+  </property>
   <widget class="QPushButton" name="btnStart">
    <property name="geometry">
     <rect>
-     <x>310</x>
-     <y>210</y>
+     <x>350</x>
+     <y>290</y>
      <width>181</width>
-     <height>101</height>
+     <height>61</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+    background-color: #1E1E2E;
+    color: #A5F3FC;
+    font-size: 20px;
+    font-weight: bold;
+    border: 2px solid #00B2FF;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 178, 255, 0.3);
+    transition: all 0.2s ease-in-out;
+}
+
+QPushButton:hover {
+    background-color: #00B2FF;
+    color: #1E1E2E;
+    border: 2px solid #A5F3FC;
+    box-shadow: 0px 4px 15px rgba(165, 243, 252, 0.6);
+    transform: scale(1.05);
+}
+
+QPushButton:pressed {
+    background-color: #0084C9;
+    color: #FFFFFF;
+    box-shadow: inset 0px 4px 8px rgba(0, 0, 0, 0.5);
+    transform: scale(0.95);
+}
+</string>
    </property>
    <property name="text">
     <string>START</string>

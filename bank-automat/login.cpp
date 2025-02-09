@@ -18,6 +18,19 @@ Login::Login(MainWindow *mainWin, QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle("ATM");
 
+    for (int i = 0; i < 12; ++i) {
+        QString buttonName = "btn_" + QString::number(i);
+        QPushButton *button = this->findChild<QPushButton *>(buttonName);
+        if (button) {
+            connect(button, &QPushButton::clicked, this, &Login::onDigitButtonClicked);
+        }
+    }
+
+    QPushButton *deleteButton = this->findChild<QPushButton *>("btn_14");
+    if (deleteButton) {
+        connect(deleteButton, &QPushButton::clicked, this, &Login::onDigitButtonClicked);
+    }
+
     inactivityTimer = new QTimer(this);
     connect(inactivityTimer, &QTimer::timeout, this, &Login::checkInactivity);
 
@@ -217,18 +230,74 @@ void Login::updateLanguage()
     if (selectedLanguage == "FI") {
         ui->label->setText("Kortin tunnus:");
         ui->label_2->setText("Kortin PIN:");
-        ui->btnLogin->setText("Kirjaudu");
+        ui->btnLogin->setText("OK");
     }
     else if (selectedLanguage == "SWE") {
         ui->label->setText("Kortnummer:");
         ui->label_2->setText("Kort-PIN:");
-        ui->btnLogin->setText("Logga in");
+        ui->btnLogin->setText("OK");
     }
     else {
         ui->label->setText("Card ID:");
         ui->label_2->setText("Card PIN:");
-        ui->btnLogin->setText("Login");
+        ui->btnLogin->setText("OK");
     }
+}
+
+void Login::onDigitButtonClicked()
+{
+    QPushButton *button = qobject_cast<QPushButton*>(sender());
+    if (!button)
+        return;
+
+    QString buttonName = button->objectName();
+
+    if (buttonName == "btn_14") {
+        if (ui->numberIdcard->hasFocus()) {
+            QString currentText = ui->numberIdcard->text();
+            if (!currentText.isEmpty()) {
+                currentText.chop(1);
+                ui->numberIdcard->setText(currentText);
+            }
+        }
+        else if (ui->numberPin->hasFocus()) {
+            QString currentText = ui->numberPin->text();
+            if (!currentText.isEmpty()) {
+                currentText.chop(1);
+                ui->numberPin->setText(currentText);
+            }
+        }
+        return;
+    }
+
+    QString value;
+    if (buttonName == "btn_10") {
+        value = "+";
+    }
+    else if (buttonName == "btn_11") {
+        value = "-";
+    }
+    else if (buttonName.startsWith("btn_")) {
+        value = buttonName.right(1);
+    }
+    else {
+        return;
+    }
+
+    if (ui->numberIdcard->hasFocus()) {
+        ui->numberIdcard->insert(value);
+    }
+    else if (ui->numberPin->hasFocus()) {
+        ui->numberPin->insert(value);
+    }
+}
+
+void Login::on_btn_Stop_clicked()
+{
+    this->hide();
+    MainWindow *objMainWindow = new MainWindow(this);
+    objMainWindow->setGeometry(this->geometry());
+    objMainWindow->show();
 }
 
 void Login::closeEvent(QCloseEvent *)
