@@ -20,6 +20,7 @@ public:
     void setLanguage(const QString &newLanguage);
     void setAuthToken(const QByteArray &token);
     void setIdCard(const QString &id);
+    void setCardMode(const QString &mode);  // 🔹 UUSI: Korttimoodi
 
 private slots:
     void on_btnBack_clicked();
@@ -32,9 +33,9 @@ private:
     QString selectedLanguage;
     QByteArray authToken;
     QString idCard;
+    QString mCardMode;  // 🔹 UUSI: Tallennetaan debit/credit-moodi
     QNetworkAccessManager *networkManager;
 
-    // Uudet metodit
     void fetchAccountDetails();
     void handleAccountDetails(QNetworkReply *reply);
     void fetchAccountBalance(int accountId, const QString &accountType);
