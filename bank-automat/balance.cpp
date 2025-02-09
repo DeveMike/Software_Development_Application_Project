@@ -27,6 +27,12 @@ void BalanceWindow::setAuthToken(const QByteArray &token)
     authToken = token;
 }
 
+void BalanceWindow::setCardMode(const QString &mode)
+{
+    mCardMode = mode;
+}
+
+
 void BalanceWindow::setIdCard(const QString &id)
 {
     idCard = id;
@@ -49,32 +55,79 @@ void BalanceWindow::handleAccountDetails(QNetworkReply *reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray responseData = reply->readAll();
+        qDebug() << "🔥 Palvelimen vastaus:" << responseData; // 🔍 Tulostetaan JSON-vastaus
+
         QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
 
         if (!jsonDoc.isArray()) {
-            qDebug() << "Virheellinen JSON-muoto /card_account-reitiltä!";
+            qDebug() << "❌ Virheellinen JSON-muoto /card_account-reitiltä!";
             reply->deleteLater();
             return;
         }
 
         QJsonArray arr = jsonDoc.array();
         if (arr.isEmpty()) {
-            qDebug() << "Kortille ei löytynyt tilejä!";
+            qDebug() << "❌ Kortille ei löytynyt tilejä!";
             reply->deleteLater();
             return;
         }
 
+        QList<int> accountIds;
+        QList<QString> accountTypes;
+
+        qDebug() << "🟢 Sisäänkirjautuneen käyttäjän kortti (idCard):" << idCard;
+
         for (const QJsonValue &val : arr) {
             QJsonObject obj = val.toObject();
+            int jsonIdCard = obj["idcard"].toInt();
             int accountId = obj["idaccount"].toInt();
             QString accountType = obj["type"].toString(); // esim. "debit" tai "credit"
-            fetchAccountBalance(accountId, accountType);
+
+            // 🔹 Suodatetaan vain nykyisen käyttäjän kortin ID:t
+            if (jsonIdCard == idCard.toInt()) {
+                qDebug() << "✅ TILI KUULUU NYKYISELLE KORTILLE -> Tyyppi:" << accountType << ", ID:" << accountId;
+
+                accountIds.append(accountId);
+                accountTypes.append(accountType);
+            } else {
+                qDebug() << "❌ OHITETAAN VIERAAN KORTIN TILI (idcard:" << jsonIdCard << ")";
+            }
+        }
+
+        if (accountIds.isEmpty()) {
+            qDebug() << "❌ Ei löytynyt tilejä, jotka kuuluvat nykyiselle kortille!";
+            reply->deleteLater();
+            return;
+        }
+
+        // 🔹 Jos kortilla on vain yksi tili, käytetään sitä
+        if (accountTypes.size() == 1) {
+            qDebug() << "✅ Kortilla vain yksi tili, haetaan saldo automaattisesti.";
+            fetchAccountBalance(accountIds.first(), accountTypes.first());
+            return;
+        }
+
+        // 🔹 Jos kortilla on sekä debit että credit, haetaan molemmat
+        int debitIndex = accountTypes.indexOf("debit");
+        int creditIndex = accountTypes.indexOf("credit");
+
+        if (debitIndex != -1) {
+            qDebug() << "✅ Haetaan debit-tilin saldo ID:" << accountIds[debitIndex];
+            fetchAccountBalance(accountIds[debitIndex], "debit");
+        }
+
+        if (creditIndex != -1) {
+            qDebug() << "✅ Haetaan credit-tilin saldo ID:" << accountIds[creditIndex];
+            fetchAccountBalance(accountIds[creditIndex], "credit");
         }
     } else {
-        qDebug() << "Virhe tilitietojen haussa:" << reply->errorString();
+        qDebug() << "❌ Virhe tilitietojen haussa:" << reply->errorString();
     }
     reply->deleteLater();
 }
+
+
+
 
 void BalanceWindow::fetchAccountBalance(int accountId, const QString &accountType)
 {
