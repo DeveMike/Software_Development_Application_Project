@@ -123,11 +123,11 @@ void Login::LoginSlot(QNetworkReply *reply)
     else {
         if (response_data != "false" && response_data.length() > 20) {
             if (selectedLanguage == "FI") {
-                ui->labelInfo->setText("Kirjautuminen onnistui!");
+                ui->labelInfo->setText("");
             } else if (selectedLanguage == "SWE") {
-                ui->labelInfo->setText("Inloggning lyckades!");
+                ui->labelInfo->setText("");
             } else {
-                ui->labelInfo->setText("Login OK!");
+                ui->labelInfo->setText("");
             }
 
             myToken = "Bearer " + response_data;
