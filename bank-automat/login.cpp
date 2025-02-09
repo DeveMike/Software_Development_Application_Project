@@ -227,9 +227,9 @@ void Login::on_btnLangENG_clicked()
 
 void Login::updateLanguage()
 {
-    if (selectedLanguage == "FI") {
-        ui->label->setText("Kortin tunnus:");
-        ui->label_2->setText("Kortin PIN:");
+    if (selectedLanguage == "ENG") {
+        ui->label->setText("Card ID:");
+        ui->label_2->setText("Card PIN:");
         ui->btnLogin->setText("OK");
     }
     else if (selectedLanguage == "SWE") {
@@ -238,8 +238,8 @@ void Login::updateLanguage()
         ui->btnLogin->setText("OK");
     }
     else {
-        ui->label->setText("Card ID:");
-        ui->label_2->setText("Card PIN:");
+        ui->label->setText("Kortin tunnus:");
+        ui->label_2->setText("Kortin PIN:");
         ui->btnLogin->setText("OK");
     }
 }

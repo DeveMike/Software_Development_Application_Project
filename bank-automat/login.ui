@@ -42,7 +42,7 @@ background-color: transparent;
 text-transform: uppercase;</string>
    </property>
    <property name="text">
-    <string>Card ID:</string>
+    <string>Kortin tunnus:</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignmentFlag::AlignCenter</set>
@@ -68,7 +68,7 @@ background-color: transparent;
 text-transform: uppercase;</string>
    </property>
    <property name="text">
-    <string>Card PIN:</string>
+    <string>Kortin PIN:</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignmentFlag::AlignCenter</set>
