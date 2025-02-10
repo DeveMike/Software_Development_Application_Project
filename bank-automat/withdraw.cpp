@@ -218,9 +218,11 @@ void WithdrawWindow::onFetchAccountDetailsFinished(QNetworkReply *reply, int amo
         int selectedAccountId = -1;
         for (auto val : arr) {
             QJsonObject obj = val.toObject();
-            if (obj["type"].toString() == mCardMode) {
-                selectedAccountId = obj["idaccount"].toInt();
-                break;
+            if (obj["type"].toString() == mCardMode && obj["idcard"].toInt() == mIdcard.toInt()) {
+                qDebug() << "Checking account id:" << obj["idaccount"].toInt() << " type: " << obj["type"].toString();
+                if (obj["idaccount"].toInt() > selectedAccountId) {
+                    selectedAccountId = obj["idaccount"].toInt();
+                }
             }
         }
 

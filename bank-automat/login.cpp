@@ -171,13 +171,10 @@ void Login::cardSlot(QNetworkReply *reply)
             ui->labelInfo->setText("Invalid JSON (card) response!");
         }
         qDebug() << "Card response is not a JSON object";
-    }
-    else {
+    } else {
         QJsonObject json = doc.object();
         QString cardType = json.value("cardtype").toString();
         qDebug() << "Card type:" << cardType;
-
-        this->hide();
 
         if (cardType == "dual") {
             CardMode *objCardMode = new CardMode(this);
@@ -187,16 +184,35 @@ void Login::cardSlot(QNetworkReply *reply)
             objCardMode->setLanguage(selectedLanguage);
             objCardMode->show();
             connect(objCardMode, &CardMode::finished, this, &Login::show);
-
-        } else {
-            MainMenu *objMainMenu = new MainMenu(this);
-            objMainMenu->setGeometry(this->geometry());
-            objMainMenu->setMyToken(myToken.toUtf8());
-            objMainMenu->setUsername(ui->numberIdcard->text());
-            objMainMenu->setLanguage(selectedLanguage);
-            objMainMenu->setCardMode("debit");
-            objMainMenu->show();
-            connect(objMainMenu, &MainMenu::finished, this, &Login::show);
+            this->hide();
+        } else if (cardType == "single") {
+            QString accountUrl = Environment::base_url() + "/card_account/" + ui->numberIdcard->text();
+            QNetworkRequest accountRequest(accountUrl);
+            accountRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+            accountRequest.setRawHeader("Authorization", myToken.toUtf8());
+            QNetworkAccessManager *accountManager = new QNetworkAccessManager(this);
+            connect(accountManager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *accountReply) {
+                QByteArray accountResponse = accountReply->readAll();
+                QJsonDocument accountDoc = QJsonDocument::fromJson(accountResponse);
+                QString accountType = "debit";
+                if (accountDoc.isObject()) {
+                    accountType = accountDoc.object().value("type").toString();
+                    if (!(accountType == "credit" || accountType == "debit"))
+                        accountType = "debit";
+                }
+                MainMenu *objMainMenu = new MainMenu(this);
+                objMainMenu->setGeometry(this->geometry());
+                objMainMenu->setMyToken(myToken.toUtf8());
+                objMainMenu->setUsername(ui->numberIdcard->text());
+                objMainMenu->setLanguage(selectedLanguage);
+                objMainMenu->setCardMode(accountType);
+                objMainMenu->show();
+                connect(objMainMenu, &MainMenu::finished, this, &Login::show);
+                this->hide();
+                accountReply->deleteLater();
+                accountManager->deleteLater();
+            });
+            accountManager->get(accountRequest);
         }
     }
 

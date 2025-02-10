@@ -1,7 +1,6 @@
 #include "balance.h"
 #include "ui_balance.h"
 #include "environment.h"
-
 #include <QNetworkRequest>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -55,19 +54,19 @@ void BalanceWindow::handleAccountDetails(QNetworkReply *reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray responseData = reply->readAll();
-        qDebug() << "🔥 Palvelimen vastaus:" << responseData; // 🔍 Tulostetaan JSON-vastaus
+        qDebug() << "Server response:" << responseData;
 
         QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
 
         if (!jsonDoc.isArray()) {
-            qDebug() << "❌ Virheellinen JSON-muoto /card_account-reitiltä!";
+            qDebug() << "Invalid JSON format from /card_account endpoint!";
             reply->deleteLater();
             return;
         }
 
         QJsonArray arr = jsonDoc.array();
         if (arr.isEmpty()) {
-            qDebug() << "❌ Kortille ei löytynyt tilejä!";
+            qDebug() << "No accounts found for the card!";
             reply->deleteLater();
             return;
         }
@@ -75,59 +74,53 @@ void BalanceWindow::handleAccountDetails(QNetworkReply *reply)
         QList<int> accountIds;
         QList<QString> accountTypes;
 
-        qDebug() << "🟢 Sisäänkirjautuneen käyttäjän kortti (idCard):" << idCard;
+        qDebug() << "Logged-in user's card (idCard):" << idCard;
 
         for (const QJsonValue &val : arr) {
             QJsonObject obj = val.toObject();
             int jsonIdCard = obj["idcard"].toInt();
             int accountId = obj["idaccount"].toInt();
-            QString accountType = obj["type"].toString(); // esim. "debit" tai "credit"
+            QString accountType = obj["type"].toString(); // "debit" or "credit"
 
-            // 🔹 Suodatetaan vain nykyisen käyttäjän kortin ID:t
             if (jsonIdCard == idCard.toInt()) {
-                qDebug() << "✅ TILI KUULUU NYKYISELLE KORTILLE -> Tyyppi:" << accountType << ", ID:" << accountId;
+                qDebug() << "Account belongs to current card -> Type:" << accountType << ", ID:" << accountId;
 
                 accountIds.append(accountId);
                 accountTypes.append(accountType);
             } else {
-                qDebug() << "❌ OHITETAAN VIERAAN KORTIN TILI (idcard:" << jsonIdCard << ")";
+                qDebug() << "Skipping account from different card (idcard:" << jsonIdCard << ")";
             }
         }
 
         if (accountIds.isEmpty()) {
-            qDebug() << "❌ Ei löytynyt tilejä, jotka kuuluvat nykyiselle kortille!";
+            qDebug() << "No accounts belonging to the current card found!";
             reply->deleteLater();
             return;
         }
 
-        // 🔹 Jos kortilla on vain yksi tili, käytetään sitä
         if (accountTypes.size() == 1) {
-            qDebug() << "✅ Kortilla vain yksi tili, haetaan saldo automaattisesti.";
+            qDebug() << "Only one account on the card, automatically fetching balance.";
             fetchAccountBalance(accountIds.first(), accountTypes.first());
             return;
         }
 
-        // 🔹 Jos kortilla on sekä debit että credit, haetaan molemmat
         int debitIndex = accountTypes.indexOf("debit");
         int creditIndex = accountTypes.indexOf("credit");
 
         if (debitIndex != -1) {
-            qDebug() << "✅ Haetaan debit-tilin saldo ID:" << accountIds[debitIndex];
+            qDebug() << "Fetching debit account balance, ID:" << accountIds[debitIndex];
             fetchAccountBalance(accountIds[debitIndex], "debit");
         }
 
         if (creditIndex != -1) {
-            qDebug() << "✅ Haetaan credit-tilin saldo ID:" << accountIds[creditIndex];
+            qDebug() << "Fetching credit account balance, ID:" << accountIds[creditIndex];
             fetchAccountBalance(accountIds[creditIndex], "credit");
         }
     } else {
-        qDebug() << "❌ Virhe tilitietojen haussa:" << reply->errorString();
+        qDebug() << "Error fetching account details:" << reply->errorString();
     }
     reply->deleteLater();
 }
-
-
-
 
 void BalanceWindow::fetchAccountBalance(int accountId, const QString &accountType)
 {
@@ -147,7 +140,7 @@ void BalanceWindow::handleBalanceResponse(QNetworkReply *reply, const QString &a
         QByteArray responseData = reply->readAll();
         QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
         if (!jsonDoc.isObject()) {
-            qDebug() << "Virheellinen JSON /account-reitiltä!";
+            qDebug() << "Invalid JSON from /account endpoint!";
             reply->deleteLater();
             return;
         }
@@ -161,7 +154,7 @@ void BalanceWindow::handleBalanceResponse(QNetworkReply *reply, const QString &a
             } else if (val.isString()) {
                 debitBalance = val.toString().toDouble();
             }
-            ui->balanceDebit->display(debitBalance);
+            ui->balanceDebit->setText(QString::number(debitBalance));
         } else if (accountType == "credit" && obj.contains("credit_balance")) {
             double creditBalance = 0.0;
             QJsonValue val = obj["credit_balance"];
@@ -170,12 +163,12 @@ void BalanceWindow::handleBalanceResponse(QNetworkReply *reply, const QString &a
             } else if (val.isString()) {
                 creditBalance = val.toString().toDouble();
             }
-            ui->balanceCredit->display(creditBalance);
+            ui->balanceCredit->setText(QString::number(creditBalance));
         } else {
-            qDebug() << "Odotettuja kenttiä ei löytynyt JSON-vastauksesta!";
+            qDebug() << "Expected fields not found in JSON response!";
         }
     } else {
-        qDebug() << "Virhe tilin saldon haussa:" << reply->errorString();
+        qDebug() << "Error fetching account balance:" << reply->errorString();
     }
     reply->deleteLater();
 }
@@ -189,21 +182,36 @@ void BalanceWindow::on_btnBack_clicked()
     }
 }
 
-void BalanceWindow::closeEvent(QCloseEvent *)
+void BalanceWindow::on_btnBack_2_clicked()
 {
-    QApplication::quit();
+    this->hide();
+    QWidget *mainMenu = parentWidget();
+    if (mainMenu) {
+        mainMenu->show();
+    }
 }
 
 void BalanceWindow::setLanguage(const QString &newLanguage)
 {
     selectedLanguage = newLanguage;
     if (selectedLanguage == "FI") {
-        ui->btnBack->setText("Takaisin");
+        ui->txtBack->setText("Takaisin");
+        ui->txtDebit->setText("Debit:");
+        ui->txtCredit->setText("Credit:");
     }
     else if (selectedLanguage == "SWE") {
-        ui->btnBack->setText("Tillbaka");
+        ui->txtBack->setText("Tillbaka");
+        ui->txtDebit->setText("Debet:");
+        ui->txtCredit->setText("Kredit:");
     }
     else if (selectedLanguage == "ENG") {
-        ui->btnBack->setText("Back");
+        ui->txtBack->setText("Back");
+        ui->txtDebit->setText("Debit:");
+        ui->txtCredit->setText("Credit:");
     }
+}
+
+void BalanceWindow::closeEvent(QCloseEvent *)
+{
+    QApplication::quit();
 }
