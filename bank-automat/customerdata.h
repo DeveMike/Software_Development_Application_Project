@@ -26,15 +26,34 @@ public:
 private slots:
     void showDataSlot(QNetworkReply *reply);
     void on_btnBack_clicked();
+    void on_btnBack_2_clicked();
     void onThumbnailDownloaded(QNetworkReply *reply);
     void onUploadThumbnailFinished(QNetworkReply *reply);
     void onBtnUploadThumbnailClicked();
+    void onDigitButtonClicked();
+    void on_btnPIN_clicked();
+    void on_txtChangePIN_textChanged(const QString &text);
+    void changePIN(const QString &oldPin, const QString &newPin);
+    void onChangePINFinished(QNetworkReply *reply);
+    void verifyOldPIN(const QString &oldPin);
+    void onVerifyOldPinFinished(QNetworkReply *reply);
 
 protected:
     void showEvent(QShowEvent *) override;
     void closeEvent(QCloseEvent *) override;
 
 private:
+    enum PinChangeState {
+        Idle,
+        EnterOld,
+        EnterNew,
+        ConfirmNew
+    };
+
+    PinChangeState currentPinState;
+    QString candidateNewPIN;
+    QString verifiedOldPIN;
+
     Ui::CustomerData *ui;
     QString idcard;
     QByteArray myToken;
@@ -48,6 +67,7 @@ private:
     int customerId;
     QNetworkAccessManager *thumbnailManager;
     QNetworkAccessManager *uploadManager;
+    QNetworkAccessManager *pinChangeManager;
 
     void loadUserThumbnail(int userId);
     void uploadNewThumbnail(int userId, QString filePath);

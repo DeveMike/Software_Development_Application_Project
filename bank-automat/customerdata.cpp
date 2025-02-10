@@ -11,17 +11,35 @@
 
 CustomerData::CustomerData(QWidget *parent) :
     QDialog(parent),
+    currentPinState(Idle),
     ui(new Ui::CustomerData),
     customerId(0),
     thumbnailManager(new QNetworkAccessManager(this)),
-    uploadManager(new QNetworkAccessManager(this))
+    uploadManager(new QNetworkAccessManager(this)),
+    pinChangeManager(nullptr)
 {
     ui->setupUi(this);
     this->setWindowTitle("ATM");
 
+    ui->txtChangePIN->setVisible(false);
+    ui->labelPinINFO->setVisible(false);
+
+    for (int i = 0; i < 12; ++i) {
+        QString buttonName = "btn_" + QString::number(i);
+        QPushButton *button = this->findChild<QPushButton *>(buttonName);
+        if (button) {
+            connect(button, &QPushButton::clicked, this, &CustomerData::onDigitButtonClicked);
+        }
+    }
+    QPushButton *deleteButton = this->findChild<QPushButton *>("btn_14");
+    if (deleteButton) {
+        connect(deleteButton, &QPushButton::clicked, this, &CustomerData::onDigitButtonClicked);
+    }
+
     connect(thumbnailManager, &QNetworkAccessManager::finished, this, &CustomerData::onThumbnailDownloaded);
     connect(uploadManager, &QNetworkAccessManager::finished, this, &CustomerData::onUploadThumbnailFinished);
     connect(ui->btnUploadThumbnail, &QPushButton::clicked, this, &CustomerData::onBtnUploadThumbnailClicked);
+    connect(ui->txtChangePIN, &QLineEdit::textChanged, this, &CustomerData::on_txtChangePIN_textChanged);
 }
 
 CustomerData::~CustomerData()
@@ -45,28 +63,31 @@ void CustomerData::setLanguage(const QString &newLanguage) {
 void CustomerData::updateLanguage()
 {
     if (selectedLanguage == "FI") {
-        ui->labelData->setText("Asiakastiedot:");
-        ui->labelID->setText("Asiakas ID:");
+        ui->labelData->setText("Asiakas ID:");
         ui->labelData_3->setText("Etunimi:");
         ui->labelData_2->setText("Sukunimi:");
-        ui->btnBack->setText("Takaisin");
-        ui->btnUploadThumbnail->setText("Vaihda kuva");
+        ui->txtBack->setText("Takaisin");
+        ui->txtPicture->setText("Vaihda kuva");
+        ui->txtPIN->setText("Vaihda PIN");
+        ui->labelPinINFO->setText("Syötä vanha PIN");
     }
     else if (selectedLanguage == "SWE") {
-        ui->labelData->setText("Kunduppgifter:");
-        ui->labelID->setText("Kund ID:");
+        ui->labelData->setText("Kund ID:");
         ui->labelData_3->setText("Förnamn:");
         ui->labelData_2->setText("Efternamn:");
-        ui->btnBack->setText("Tillbaka");
-        ui->btnUploadThumbnail->setText("Byt bild");
+        ui->txtBack->setText("Tillbaka");
+        ui->txtPicture->setText("Byt bild");
+        ui->txtPIN->setText("Byt PIN");
+        ui->labelPinINFO->setText("Ange den gamla PIN-koden");
     }
     else if (selectedLanguage == "ENG") {
-        ui->labelData->setText("Customer Data:");
-        ui->labelID->setText("Customer ID:");
+        ui->labelData->setText("Customer ID:");
         ui->labelData_3->setText("First Name:");
         ui->labelData_2->setText("Last Name:");
-        ui->btnBack->setText("Back");
-        ui->btnUploadThumbnail->setText("Change image");
+        ui->txtBack->setText("Back");
+        ui->txtPicture->setText("Change image");
+        ui->txtPIN->setText("Change PIN");
+        ui->labelPinINFO->setText("Enter the old PIN");
     }
 }
 
@@ -200,6 +221,11 @@ void CustomerData::onUploadThumbnailFinished(QNetworkReply *reply)
 
 void CustomerData::onBtnUploadThumbnailClicked()
 {
+    ui->txtChangePIN->setVisible(false);
+    ui->labelPinINFO->setVisible(false);
+    ui->labelPinINFO->clear();
+    ui->txtChangePIN->clear();
+
     QString filePath = QFileDialog::getOpenFileName(this, "Select Image", "", "Images (*.png *.jpg *.jpeg)");
     if (!filePath.isEmpty() && customerId != 0) {
         uploadNewThumbnail(customerId, filePath);
@@ -214,6 +240,231 @@ void CustomerData::on_btnBack_clicked()
     if (mainMenu) {
         mainMenu->show();
     }
+}
+
+void CustomerData::on_btnBack_2_clicked()
+{
+    this->hide();
+    QWidget *mainMenu = parentWidget();
+    if (mainMenu) {
+        mainMenu->show();
+    }
+}
+
+void CustomerData::on_btnPIN_clicked() {
+    ui->txtChangePIN->clear();
+    ui->txtChangePIN->setVisible(true);
+    ui->labelPinINFO->setVisible(true);
+    currentPinState = EnterOld;
+    ui->txtChangePIN->setFocus();
+}
+
+void CustomerData::onDigitButtonClicked()
+{
+    QPushButton *button = qobject_cast<QPushButton*>(sender());
+    if (!button)
+        return;
+
+    QString buttonName = button->objectName();
+
+    if (buttonName == "btn_14") {
+        if (ui->txtChangePIN->hasFocus()) {
+            QString currentText = ui->txtChangePIN->text();
+            if (!currentText.isEmpty()) {
+                currentText.chop(1);
+                ui->txtChangePIN->setText(currentText);
+            }
+        }
+        return;
+    }
+
+    QString value;
+    if (buttonName == "btn_10") {
+        value = "+";
+    }
+    else if (buttonName == "btn_11") {
+        value = "-";
+    }
+    else if (buttonName.startsWith("btn_")) {
+        value = buttonName.right(1);
+    }
+    else {
+        return;
+    }
+
+    if (ui->txtChangePIN->hasFocus()) {
+        ui->txtChangePIN->insert(value);
+    }
+}
+
+void CustomerData::on_txtChangePIN_textChanged(const QString &text) {
+    if (text.length() != 4) {
+        return;
+    }
+
+    if (currentPinState == EnterOld) {
+        verifiedOldPIN = text;
+        verifyOldPIN(text);
+        ui->txtChangePIN->clear();
+    }
+    else if (currentPinState == EnterNew) {
+        candidateNewPIN = text;
+        QTimer::singleShot(100, this, [this]() {
+            currentPinState = ConfirmNew;
+
+            if (selectedLanguage == "FI") {
+                ui->labelPinINFO->setText("Syötä uusi PIN uudestaan");
+            } else if (selectedLanguage == "SWE") {
+                ui->labelPinINFO->setText("Ange den nya PIN-koden igen");
+            } else if (selectedLanguage == "ENG") {
+                ui->labelPinINFO->setText("Enter the new PIN again");
+            }
+
+            ui->txtChangePIN->clear();
+        });
+    }
+    else if (currentPinState == ConfirmNew) {
+        if (text == candidateNewPIN) {
+            changePIN(verifiedOldPIN, candidateNewPIN);
+        } else {
+            if (selectedLanguage == "FI") {
+                ui->labelPinINFO->setText("PIN ei täsmää, syötä uusi PIN uudestaan");
+            } else if (selectedLanguage == "SWE") {
+                ui->labelPinINFO->setText("PIN-koden matchar inte, ange den nya PIN-koden igen");
+            } else if (selectedLanguage == "ENG") {
+                ui->labelPinINFO->setText("PIN does not match, enter the new PIN again");
+            }
+
+            currentPinState = EnterNew;
+        }
+        ui->txtChangePIN->clear();
+    }
+}
+
+void CustomerData::verifyOldPIN(const QString &oldPin) {
+    QJsonObject jsonObj;
+    jsonObj.insert("idcard", idcard);
+    jsonObj.insert("pin", oldPin);
+
+    QString site_url = Environment::base_url() + "/login";
+    QNetworkRequest request(site_url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    connect(manager, &QNetworkAccessManager::finished,
+            this, &CustomerData::onVerifyOldPinFinished);
+    manager->post(request, QJsonDocument(jsonObj).toJson());
+}
+
+void CustomerData::onVerifyOldPinFinished(QNetworkReply *reply) {
+    QByteArray response = reply->readAll();
+    qDebug() << "VerifyOldPIN response:" << response;
+
+    if (response.length() < 2) {
+        if (selectedLanguage == "FI") {
+            ui->labelPinINFO->setText("Palvelin ei vastaa!");
+        } else if (selectedLanguage == "SWE") {
+            ui->labelPinINFO->setText("Servern svarar inte!");
+        } else if (selectedLanguage == "ENG") {
+            ui->labelPinINFO->setText("Server is not responding!");
+        }
+        currentPinState = EnterOld;
+    }
+    else if (response == "!404!") {
+        if (selectedLanguage == "FI") {
+            ui->labelPinINFO->setText("Tietokantavirhe!");
+        } else if (selectedLanguage == "SWE") {
+            ui->labelPinINFO->setText("Databasfel!");
+        } else if (selectedLanguage == "ENG") {
+            ui->labelPinINFO->setText("Database error!");
+        }
+        currentPinState = EnterOld;
+    }
+    else if (response == "false" || response.length() <= 20) {
+        if (selectedLanguage == "FI") {
+            ui->labelPinINFO->setText("Väärä PIN, yritä uudelleen");
+        } else if (selectedLanguage == "SWE") {
+            ui->labelPinINFO->setText("Fel PIN, försök igen");
+        } else if (selectedLanguage == "ENG") {
+            ui->labelPinINFO->setText("Incorrect PIN, try again");
+        }
+        currentPinState = EnterOld;
+    }
+    else {
+        if (selectedLanguage == "FI") {
+            ui->labelPinINFO->setText("Syötä uusi PIN");
+        } else if (selectedLanguage == "SWE") {
+            ui->labelPinINFO->setText("Ange den nya PIN-koden");
+        } else if (selectedLanguage == "ENG") {
+            ui->labelPinINFO->setText("Enter the new PIN");
+        }
+        currentPinState = EnterNew;
+    }
+    reply->deleteLater();
+}
+
+void CustomerData::changePIN(const QString &oldPin, const QString &newPin) {
+    QUrl apiUrl(Environment::base_url() + "/card/" + idcard);
+    QNetworkRequest request(apiUrl);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Authorization", myToken);
+
+    QJsonObject json;
+    json.insert("idcustomer", customerId);
+    json.insert("pin", newPin);
+    json.insert("cardtype", "single");
+    json.insert("status", "active");
+    json.insert("expiry_date", "2099-12-31");
+
+    QJsonDocument doc(json);
+    QByteArray data = doc.toJson();
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    connect(manager, &QNetworkAccessManager::finished,
+    this, &CustomerData::onChangePINFinished);
+    QNetworkReply* reply = manager->sendCustomRequest(request, "PUT", data);
+}
+
+void CustomerData::onChangePINFinished(QNetworkReply *reply) {
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray response = reply->readAll();
+        qDebug() << "PIN change response:" << response;
+        QString responseStr = QString::fromUtf8(response);
+        if (responseStr.contains("Card updated", Qt::CaseInsensitive)) {
+            if (selectedLanguage == "FI") {
+                ui->labelPinINFO->setText("PIN vaihdettu");
+            } else if (selectedLanguage == "SWE") {
+                ui->labelPinINFO->setText("PIN-kod uppdaterad");
+            } else if (selectedLanguage == "ENG") {
+                ui->labelPinINFO->setText("PIN changed");
+            }
+            ui->labelPinINFO->setVisible(false);
+            ui->txtChangePIN->setVisible(false);
+        } else {
+            if (selectedLanguage == "FI") {
+                ui->labelPinINFO->setText("PIN:n vaihto epäonnistui");
+            } else if (selectedLanguage == "SWE") {
+                ui->labelPinINFO->setText("Misslyckades med att byta PIN-kod");
+            } else if (selectedLanguage == "ENG") {
+                ui->labelPinINFO->setText("PIN change failed");
+            }
+        }
+    } else {
+        qDebug() << "Error changing PIN:" << reply->errorString();
+        if (selectedLanguage == "FI") {
+            ui->labelPinINFO->setText("Virhe PIN:n vaihdossa");
+        } else if (selectedLanguage == "SWE") {
+            ui->labelPinINFO->setText("Fel vid byte av PIN-kod");
+        } else if (selectedLanguage == "ENG") {
+            ui->labelPinINFO->setText("Error changing PIN");
+        }
+    }
+    reply->deleteLater();
+    QNetworkAccessManager *manager = qobject_cast<QNetworkAccessManager*>(sender());
+    if (manager) {
+        manager->deleteLater();
+    }
+    currentPinState = Idle;
 }
 
 void CustomerData::closeEvent(QCloseEvent *)
