@@ -1,7 +1,7 @@
 #include "withdraw.h"
 #include "ui_withdraw.h"
 #include "environment.h"
-
+#include "mainmenu.h"
 #include <QMessageBox>
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -17,6 +17,12 @@ WithdrawWindow::WithdrawWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle("ATM");
+
+    inactivityTimer = new QTimer(this);
+    inactivityTimer->setInterval(10000); // 10 sec
+    connect(inactivityTimer, &QTimer::timeout, this, &WithdrawWindow::checkInactivity);
+    qApp->installEventFilter(this);
+
     networkManager = new QNetworkAccessManager(this);
 
     for (int i = 0; i < 12; ++i) {
@@ -37,6 +43,44 @@ WithdrawWindow::WithdrawWindow(QWidget *parent) :
 WithdrawWindow::~WithdrawWindow()
 {
     delete ui;
+}
+
+void WithdrawWindow::showEvent(QShowEvent *event)
+{
+    inactivityTimer->start(10000);
+    QDialog::showEvent(event);
+}
+
+void WithdrawWindow::hideEvent(QHideEvent *event)
+{
+    inactivityTimer->stop();
+    inactivityTimer->setInterval(10000);
+    QDialog::hideEvent(event);
+}
+
+bool WithdrawWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::MouseMove || event->type() == QEvent::MouseButtonPress)
+    {
+        inactivityTimer->start(10000);
+    }
+    return QDialog::eventFilter(obj, event);
+}
+
+void WithdrawWindow::checkInactivity()
+{
+    if (!this->isVisible())
+    {
+        inactivityTimer->stop();
+        return;
+    }
+
+    this->hide();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
+    }
 }
 
 void WithdrawWindow::setIdcard(const QString &idcard)
@@ -62,7 +106,13 @@ void WithdrawWindow::setLanguage(const QString &newLanguage)
 
 void WithdrawWindow::updateLanguage()
 {
-    if (selectedLanguage == "SWE") {
+    if (selectedLanguage == "FI") {
+        ui->btnBack->setText("STOP");
+        ui->txtBack->setText("Takaisin");
+        ui->txtOut_x->setText("Muu summa");
+    }
+
+    else if (selectedLanguage == "SWE") {
         ui->btnBack->setText("STOP");
         ui->txtBack->setText("Tillbaka");
         ui->txtOut_x->setText("Annan summa");
@@ -71,11 +121,6 @@ void WithdrawWindow::updateLanguage()
         ui->btnBack->setText("STOP");
         ui->txtBack->setText("Back");
         ui->txtOut_x->setText("Other amount");
-    }
-    else {
-        ui->btnBack->setText("STOP");
-        ui->txtBack->setText("Takaisin");
-        ui->txtOut_x->setText("Muu summa");
     }
 }
 
@@ -87,18 +132,20 @@ void WithdrawWindow::hideCustomAmountInput()
 void WithdrawWindow::on_btnBack_clicked()
 {
     this->hide();
-    QWidget *mainMenu = parentWidget();
-    if (mainMenu) {
-        mainMenu->show();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
     }
 }
 
 void WithdrawWindow::on_btnBack_2_clicked()
 {
     this->hide();
-    QWidget *mainMenu = parentWidget();
-    if (mainMenu) {
-        mainMenu->show();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
     }
 }
 
@@ -111,35 +158,40 @@ void WithdrawWindow::on_buttonOut_20_clicked()
 {
     ui->txtINFO->clear();
     hideCustomAmountInput();
-    fetchAccountDetails(20);
+    int amount = 20;
+    fetchAccountDetails(amount);
 }
 
 void WithdrawWindow::on_buttonOut_40_clicked()
 {
     ui->txtINFO->clear();
     hideCustomAmountInput();
-    fetchAccountDetails(40);
+    int amount = 40;
+    fetchAccountDetails(amount);
 }
 
 void WithdrawWindow::on_buttonOut_50_clicked()
 {
     ui->txtINFO->clear();
     hideCustomAmountInput();
-    fetchAccountDetails(50);
+    int amount = 50;
+    fetchAccountDetails(amount);
 }
 
 void WithdrawWindow::on_buttonOut_80_clicked()
 {
     ui->txtINFO->clear();
     hideCustomAmountInput();
-    fetchAccountDetails(80);
+    int amount = 80;
+    fetchAccountDetails(amount);
 }
 
 void WithdrawWindow::on_buttonOut_100_clicked()
 {
     ui->txtINFO->clear();
     hideCustomAmountInput();
-    fetchAccountDetails(100);
+    int amount = 100;
+    fetchAccountDetails(amount);
 }
 
 void WithdrawWindow::on_buttonOut_x_clicked()
@@ -152,8 +204,13 @@ void WithdrawWindow::on_buttonOut_x_clicked()
 
 void WithdrawWindow::on_btnOK_clicked()
 {
+    if (!ui->txtOtherAmount->isVisible()) {
+        return;
+    }
+
     bool ok;
     int customAmount = ui->txtOtherAmount->text().toInt(&ok);
+
     if (!ok) {
         if (selectedLanguage == "FI") {
             ui->txtINFO->setText("Virheellinen summa");
@@ -215,11 +272,11 @@ void WithdrawWindow::onFetchAccountDetailsFinished(QNetworkReply *reply, int amo
             return;
         }
 
-        int selectedAccountId = -1;
+        selectedAccountId = -1;
+
         for (auto val : arr) {
             QJsonObject obj = val.toObject();
             if (obj["type"].toString() == mCardMode && obj["idcard"].toInt() == mIdcard.toInt()) {
-                qDebug() << "Checking account id:" << obj["idaccount"].toInt() << " type: " << obj["type"].toString();
                 if (obj["idaccount"].toInt() > selectedAccountId) {
                     selectedAccountId = obj["idaccount"].toInt();
                 }
@@ -231,6 +288,7 @@ void WithdrawWindow::onFetchAccountDetailsFinished(QNetworkReply *reply, int amo
         } else {
             processWithdrawal(selectedAccountId, mCardMode, amount);
         }
+
     } else {
         ui->txtINFO->setText("Failed to retrieve card_account: " + reply->errorString());
     }
@@ -324,11 +382,39 @@ void WithdrawWindow::onWithdrawalResponse(QNetworkReply *reply, int amount)
 
     if (reply->error() == QNetworkReply::NoError) {
         ui->txtINFO->setText(successMessage);
+        logTransaction(amount);
     } else {
         ui->txtINFO->setText(errorMessage + reply->errorString());
     }
 
     reply->deleteLater();
+}
+
+void WithdrawWindow::logTransaction(int amount)
+{
+    QString url = Environment::base_url() + "/transaction";
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Authorization", mToken);
+
+    QJsonObject transactionObj;
+    transactionObj["idaccount"] = selectedAccountId;
+    transactionObj["type"] = "withdrawal";
+    transactionObj["amount"] = amount;
+    transactionObj["description"] = "ATM Withdrawal";
+
+    QJsonDocument doc(transactionObj);
+    QByteArray jsonData = doc.toJson();
+
+    QNetworkReply *reply = networkManager->post(request, jsonData);
+    connect(reply, &QNetworkReply::finished, this, [=]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            qDebug() << "Transaction logged successfully.";
+        } else {
+            qDebug() << "Failed to log transaction:" << reply->errorString();
+        }
+        reply->deleteLater();
+    });
 }
 
 void WithdrawWindow::onDigitButtonClicked()

@@ -1,6 +1,7 @@
 #include "customerdata.h"
 #include "environment.h"
 #include "ui_customerdata.h"
+#include "mainmenu.h"
 #include <QDebug>
 #include <QFileDialog>
 #include <QHttpMultiPart>
@@ -20,6 +21,11 @@ CustomerData::CustomerData(QWidget *parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle("ATM");
+
+    inactivityTimer = new QTimer(this);
+    inactivityTimer->setInterval(10000); // 10 sec
+    connect(inactivityTimer, &QTimer::timeout, this, &CustomerData::checkInactivity);
+    qApp->installEventFilter(this);
 
     ui->txtChangePIN->setVisible(false);
     ui->labelPinINFO->setVisible(false);
@@ -105,7 +111,40 @@ void CustomerData::showEvent(QShowEvent *event)
 
     reply = dataManager->get(request);
 
+    inactivityTimer->start(10000);
     QDialog::showEvent(event);
+}
+
+void CustomerData::hideEvent(QHideEvent *event)
+{
+    inactivityTimer->stop();
+    inactivityTimer->setInterval(10000);
+    QDialog::hideEvent(event);
+}
+
+bool CustomerData::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::MouseMove || event->type() == QEvent::MouseButtonPress)
+    {
+        inactivityTimer->start(10000);
+    }
+    return QDialog::eventFilter(obj, event);
+}
+
+void CustomerData::checkInactivity()
+{
+    if (!this->isVisible())
+    {
+        inactivityTimer->stop();
+        return;
+    }
+
+    this->hide();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
+    }
 }
 
 void CustomerData::showDataSlot(QNetworkReply *reply)
@@ -226,7 +265,12 @@ void CustomerData::onBtnUploadThumbnailClicked()
     ui->labelPinINFO->clear();
     ui->txtChangePIN->clear();
 
+    inactivityTimer->stop();
+
     QString filePath = QFileDialog::getOpenFileName(this, "Select Image", "", "Images (*.png *.jpg *.jpeg)");
+
+    inactivityTimer->start(10000);
+
     if (!filePath.isEmpty() && customerId != 0) {
         uploadNewThumbnail(customerId, filePath);
     }
@@ -235,19 +279,20 @@ void CustomerData::onBtnUploadThumbnailClicked()
 void CustomerData::on_btnBack_clicked()
 {
     this->hide();
-    QWidget *mainMenu = parentWidget();
-
-    if (mainMenu) {
-        mainMenu->show();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
     }
 }
 
 void CustomerData::on_btnBack_2_clicked()
 {
     this->hide();
-    QWidget *mainMenu = parentWidget();
-    if (mainMenu) {
-        mainMenu->show();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
     }
 }
 

@@ -2,6 +2,7 @@
 #define CARDMODE_H
 
 #include <QDialog>
+#include <QTimer>
 
 namespace Ui {
 class CardMode;
@@ -23,15 +24,20 @@ private slots:
     void on_btnDebit_clicked();
     void on_btnCredit_clicked();
     void on_btnBack_clicked();
+    void checkInactivity();
 
 protected:
     void closeEvent(QCloseEvent *) override;
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
     Ui::CardMode *ui;
     QString mLanguage;
     QString mUsername;
     QString mToken;
+    QTimer *inactivityTimer;
 };
 
 #endif // CARDMODE_H

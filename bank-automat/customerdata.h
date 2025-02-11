@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QFileDialog>
 #include <QHttpMultiPart>
+#include <QTimer>
 
 namespace Ui {
 class CustomerData;
@@ -37,10 +38,13 @@ private slots:
     void onChangePINFinished(QNetworkReply *reply);
     void verifyOldPIN(const QString &oldPin);
     void onVerifyOldPinFinished(QNetworkReply *reply);
+    void checkInactivity();
 
 protected:
     void showEvent(QShowEvent *) override;
     void closeEvent(QCloseEvent *) override;
+    void hideEvent(QHideEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
     enum PinChangeState {
@@ -68,6 +72,7 @@ private:
     QNetworkAccessManager *thumbnailManager;
     QNetworkAccessManager *uploadManager;
     QNetworkAccessManager *pinChangeManager;
+    QTimer *inactivityTimer;
 
     void loadUserThumbnail(int userId);
     void uploadNewThumbnail(int userId, QString filePath);

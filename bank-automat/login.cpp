@@ -57,7 +57,7 @@ void Login::hideEvent(QHideEvent *event)
 
 bool Login::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::MouseMove)
+    if (event->type() == QEvent::MouseMove || event->type() == QEvent::MouseButtonPress)
     {
         inactivityTimer->start(10000);
     }
@@ -75,6 +75,8 @@ void Login::checkInactivity()
     this->hide();
     if (mainWindow)
     {
+        MainWindow *mainWindow = new MainWindow(this);
+        mainWindow->setGeometry(this->geometry());
         mainWindow->show();
     }
 }
