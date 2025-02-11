@@ -104,10 +104,34 @@ The following is the Entity-Relationship (ER) diagram of our current database de
 
 <img width="886" alt="Image" src="https://github.com/user-attachments/assets/b0a08671-ee16-4c40-b963-df754a440123" />
 
+# UML
+
+## Use Case Diagram
+The use case diagram outlines the system’s functionality from a user’s perspective, showing different user roles and their interactions with the system’s main features.
+
+<img src="UML - Käyttötapauskaavio.png" width="500" alt="Käyttötapauskaavio">
+
 ## Class Diagram
+The class diagram illustrates the structure and relationships between the key classes in the project, highlighting how they interact and organize functionality within the system.
 
-The class diagram illustrates the structure and relationships between the key classes in the project, highlighting how they interact and organize functionality within the system:
+<img src="Luokkakaavio.png" width="500" alt="Luokkakaavio">
 
-...lisätään kaaviot kaikista?
+## State Diagram
+The state diagram demonstrates the various states an object in the system can have and how it transitions between these states based on different events or conditions.
 
+<img src="UML - Tilakaavio.png" width="500" alt="Tilakaavio">
 
+## Communication Diagram
+The communication diagram maps out the interactions between objects in the system, focusing on how they exchange messages to accomplish tasks and maintain workflow.
+
+<img src="UML- Viestiyhteyskaavio.png" width="500" alt="Viestiyhteyskaavio">
+
+## Component Diagram
+The component diagram visualizes the high-level structure of the system, depicting how different software components interact and depend on each other to form the complete application.
+
+<img src="UML - Komponenttikaavio.png" width="500" alt="Komponenttikaavio">
+
+## Deployment Diagram
+The deployment diagram represents the system’s physical architecture, illustrating how software components are distributed across different hardware and network nodes.
+
+<img src="UML - Käyttöönottokaavio.png" width="500" alt="Käyttöönottokaavio">
