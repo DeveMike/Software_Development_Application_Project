@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
+#include <QTimer>
 
 namespace Ui {
 class BalanceWindow;
@@ -25,9 +26,13 @@ public:
 private slots:
     void on_btnBack_clicked();
     void on_btnBack_2_clicked();
+    void checkInactivity();
 
 protected:
     void closeEvent(QCloseEvent *) override;
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
     Ui::BalanceWindow *ui;
@@ -36,6 +41,7 @@ private:
     QString idCard;
     QString mCardMode;
     QNetworkAccessManager *networkManager;
+    QTimer *inactivityTimer;
 
     void fetchAccountDetails();
     void handleAccountDetails(QNetworkReply *reply);

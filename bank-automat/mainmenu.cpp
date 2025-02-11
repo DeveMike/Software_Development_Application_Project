@@ -14,11 +14,54 @@ MainMenu::MainMenu(QWidget *parent)
 {
     ui->setupUi(this);
     this->setWindowTitle("ATM");
+
+    inactivityTimer = new QTimer(this);
+    inactivityTimer->setInterval(30000); // 30 sec
+    connect(inactivityTimer, &QTimer::timeout, this, &MainMenu::checkInactivity);
+
+    qApp->installEventFilter(this);
 }
 
 MainMenu::~MainMenu()
 {
     delete ui;
+}
+
+void MainMenu::showEvent(QShowEvent *event)
+{
+    inactivityTimer->start(30000);
+    loadUserThumbnail(idcard);
+    QDialog::showEvent(event);
+}
+
+void MainMenu::hideEvent(QHideEvent *event)
+{
+    inactivityTimer->stop();
+    inactivityTimer->setInterval(30000);
+    QDialog::hideEvent(event);
+}
+
+bool MainMenu::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::MouseMove || event->type() == QEvent::MouseButtonPress)
+    {
+        inactivityTimer->start(30000);
+    }
+    return QDialog::eventFilter(obj, event);
+}
+
+void MainMenu::checkInactivity()
+{
+    if (!this->isVisible())
+    {
+        inactivityTimer->stop();
+        return;
+    }
+
+    this->hide();
+    MainWindow *login = new MainWindow(this);
+    login->setGeometry(this->geometry());
+    login->show();
 }
 
 void MainMenu::setMyToken(const QByteArray &newMyToken)
@@ -36,6 +79,7 @@ void MainMenu::setCardMode(const QString &mode)
 void MainMenu::setUsername(const QString &newUsername)
 {
     idcard = newUsername;
+    loadUserThumbnail(idcard);
 
     QNetworkRequest request(Environment::base_url() + "/card/" + idcard);
     request.setRawHeader("Authorization", myToken);
@@ -43,6 +87,42 @@ void MainMenu::setUsername(const QString &newUsername)
     dataManager = new QNetworkAccessManager(this);
     connect(dataManager, &QNetworkAccessManager::finished, this, &MainMenu::onCardDataReceived);
     dataManager->get(request);
+}
+
+void MainMenu::setLanguage(const QString &newLanguage)
+{
+    selectedLanguage = newLanguage;
+    qDebug() << "Language set in MainMenu: " << selectedLanguage;
+
+    if (selectedLanguage == "FI") {
+        ui->txtWithdraw->setText("Nosta");
+        ui->txtBalance->setText("Saldo");
+        ui->txtTransfer->setText("Siirrä");
+        ui->txtTransaction->setText("Tapahtumat");
+        ui->txtData->setText("Omat tiedot");
+        ui->txtBack->setText("Kirjaudu ulos");
+    }
+    else if (selectedLanguage == "SWE") {
+        ui->txtWithdraw->setText("Uttag");
+        ui->txtBalance->setText("Saldo");
+        ui->txtTransfer->setText("Överföring");
+        ui->txtTransaction->setText("Transaktioner");
+        ui->txtData->setText("Mina uppgifter");
+        ui->txtBack->setText("Logga ut");
+    }
+    else if (selectedLanguage == "ENG") {
+        ui->txtWithdraw->setText("Withdraw");
+        ui->txtBalance->setText("Balance");
+        ui->txtTransfer->setText("Transfer");
+        ui->txtTransaction->setText("Transactions");
+        ui->txtData->setText("My Data");
+        ui->txtBack->setText("Log out");
+    }
+}
+
+QString MainMenu::getLanguage() const
+{
+    return selectedLanguage;
 }
 
 void MainMenu::onCardDataReceived(QNetworkReply *reply)
@@ -75,9 +155,23 @@ void MainMenu::onCardDataReceived(QNetworkReply *reply)
 
                 if (custReply->error() == QNetworkReply::NoError) {
                     QJsonObject custObj = QJsonDocument::fromJson(custData).object();
-                    ui->labelUsername->setText(custObj["fname"].toString()
+
+                    QString language = selectedLanguage;
+                    QString welcomeText;
+
+                    if (language == "FI") {
+                        welcomeText = "Tervetuloa ";
+                    } else if (language == "SWE") {
+                        welcomeText = "Välkommen ";
+                    } else if (language == "ENG") {
+                        welcomeText = "Welcome ";
+                    } else {
+                        welcomeText = "Tervetuloa ";
+                    }
+
+                    ui->labelUsername->setText(welcomeText + custObj["fname"].toString()
                                                + " "
-                                               + custObj["lname"].toString());
+                                               + custObj["lname"].toString() + " !");
                 } else {
                     ui->labelUsername->setText("Error");
                 }
@@ -86,43 +180,48 @@ void MainMenu::onCardDataReceived(QNetworkReply *reply)
     customerDataManager->get(custReq);
 }
 
-void MainMenu::setLanguage(const QString &newLanguage)
+void MainMenu::loadUserThumbnail(const QString &cardId)
 {
-    selectedLanguage = newLanguage;
-    qDebug() << "Language set in MainMenu: " << selectedLanguage;
+    QNetworkRequest request(Environment::base_url() + "/card/" + cardId);
+    request.setRawHeader("Authorization", myToken);
 
-    if (selectedLanguage == "FI") {
-        ui->labelWelcome->setText("Tervetuloa");
-        ui->btnWithdraw->setText("Nosta");
-        ui->btnBalance->setText("Saldo");
-        ui->btnTransfer->setText("Siirrä");
-        ui->btnTransaction->setText("Tapahtumat");
-        ui->btnData->setText("Omat tiedot");
-        ui->btnLogout->setText("Kirjaudu ulos");
-    }
-    else if (selectedLanguage == "SWE") {
-        ui->labelWelcome->setText("Välkommen");
-        ui->btnWithdraw->setText("Uttag");
-        ui->btnBalance->setText("Saldo");
-        ui->btnTransfer->setText("Överföring");
-        ui->btnTransaction->setText("Transaktioner");
-        ui->btnData->setText("Mina uppgifter");
-        ui->btnLogout->setText("Logga ut");
-    }
-    else if (selectedLanguage == "ENG") {
-        ui->labelWelcome->setText("Welcome");
-        ui->btnWithdraw->setText("Withdraw");
-        ui->btnBalance->setText("Balance");
-        ui->btnTransfer->setText("Transfer");
-        ui->btnTransaction->setText("Transactions");
-        ui->btnData->setText("My Data");
-        ui->btnLogout->setText("Log out");
-    }
-}
+    QNetworkAccessManager *cardDataManager = new QNetworkAccessManager(this);
+    connect(cardDataManager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *cardReply) {
+        QByteArray response_data = cardReply->readAll();
+        cardReply->deleteLater();
+        cardDataManager->deleteLater();
 
-QString MainMenu::getLanguage() const
-{
-    return selectedLanguage;
+        if (cardReply->error() != QNetworkReply::NoError)
+            return;
+
+        QJsonObject cardObj = QJsonDocument::fromJson(response_data).object();
+        int customerId = cardObj["idcustomer"].toInt();
+        if (customerId == 0) {
+            ui->lblThumbnail->clear();
+            return;
+        }
+
+        QUrl url(Environment::base_url() + "/customer/getThumbnail?userId=" + QString::number(customerId));
+        QNetworkRequest thumbRequest(url);
+        thumbRequest.setRawHeader(QByteArray("Authorization"), myToken);
+
+        QNetworkAccessManager *thumbnailManager = new QNetworkAccessManager(this);
+        connect(thumbnailManager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *thumbReply) {
+            if (thumbReply->error() == QNetworkReply::NoError) {
+                QPixmap pixmap;
+                if (pixmap.loadFromData(thumbReply->readAll()))
+                    ui->lblThumbnail->setPixmap(pixmap.scaled(151, 151, Qt::KeepAspectRatio));
+                else
+                    ui->lblThumbnail->clear();
+            }
+            thumbReply->deleteLater();
+            thumbnailManager->deleteLater();
+        });
+
+        thumbnailManager->get(thumbRequest);
+    });
+
+    cardDataManager->get(request);
 }
 
 void MainMenu::on_btnData_clicked()
@@ -184,6 +283,14 @@ void MainMenu::on_btnTransaction_clicked()
 }
 
 void MainMenu::on_btnLogout_clicked()
+{
+    this->hide();
+    MainWindow *objMainWindow = new MainWindow(this);
+    objMainWindow->setGeometry(this->geometry());
+    objMainWindow->show();
+}
+
+void MainMenu::on_btnBack_2_clicked()
 {
     this->hide();
     MainWindow *objMainWindow = new MainWindow(this);

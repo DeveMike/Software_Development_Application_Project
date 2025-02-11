@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QDialog>
+#include <QTimer>
 #include <QtNetwork>
 #include <QNetworkAccessManager>
 #include <QJsonDocument>
@@ -32,9 +33,14 @@ private slots:
     void on_btnBalance_clicked();
     void on_btnTransaction_clicked();
     void on_btnLogout_clicked();
+    void on_btnBack_2_clicked();
+    void checkInactivity();
 
 protected:
     void closeEvent(QCloseEvent *) override;
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
     Ui::MainMenu *ui;
@@ -44,6 +50,9 @@ private:
     QString selectedLanguage;
     QString mCardMode;
     QNetworkAccessManager *dataManager = nullptr;
+    QTimer *inactivityTimer;
+    QNetworkAccessManager *thumbnailManager;
+    void loadUserThumbnail(const QString &userId);
 };
 
 #endif // MAINMENU_H

@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QTimer>
 
 namespace Ui {
 class WithdrawWindow;
@@ -22,6 +23,7 @@ public:
     void setMyToken(const QByteArray &token);
     void setLanguage(const QString &newLanguage);
     void showCenteredInformation();
+    void logTransaction(int amount);
 
 private slots:
     void onWithdrawalResponse(QNetworkReply *reply, int amount);
@@ -36,12 +38,17 @@ private slots:
     void onDigitButtonClicked();
     void on_btnOK_clicked();
     void hideCustomAmountInput();
+    void checkInactivity();
 
 protected:
     void closeEvent(QCloseEvent *) override;
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
     Ui::WithdrawWindow *ui;
+    int selectedAccountId;
 
     void fetchAccountDetails(int amount);
     void onFetchAccountDetailsFinished(QNetworkReply *reply, int amount);
@@ -59,6 +66,7 @@ private:
     QString creditLimitExceededMsg() const;
     QString successWithdrawMsg(int amount) const;
     QString errorWithdrawMsg(const QString &errorStr) const;
+    QTimer *inactivityTimer;
 };
 
 #endif // WITHDRAWWINDOW_H

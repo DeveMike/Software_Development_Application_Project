@@ -1,5 +1,6 @@
 #include "balance.h"
 #include "ui_balance.h"
+#include "mainmenu.h"
 #include "environment.h"
 #include <QNetworkRequest>
 #include <QJsonDocument>
@@ -14,11 +15,55 @@ BalanceWindow::BalanceWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle("ATM");
+
+    inactivityTimer = new QTimer(this);
+    inactivityTimer->setInterval(10000); // 10 sec
+    connect(inactivityTimer, &QTimer::timeout, this, &BalanceWindow::checkInactivity);
+
+    qApp->installEventFilter(this);
 }
 
 BalanceWindow::~BalanceWindow()
 {
     delete ui;
+}
+
+void BalanceWindow::showEvent(QShowEvent *event)
+{
+    inactivityTimer->start(10000);
+    QDialog::showEvent(event);
+}
+
+void BalanceWindow::hideEvent(QHideEvent *event)
+{
+    inactivityTimer->stop();
+    inactivityTimer->setInterval(10000);
+    QDialog::hideEvent(event);
+}
+
+bool BalanceWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::MouseMove || event->type() == QEvent::MouseButtonPress)
+    {
+        inactivityTimer->start(10000);
+    }
+    return QDialog::eventFilter(obj, event);
+}
+
+void BalanceWindow::checkInactivity()
+{
+    if (!this->isVisible())
+    {
+        inactivityTimer->stop();
+        return;
+    }
+
+    this->hide();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
+    }
 }
 
 void BalanceWindow::setAuthToken(const QByteArray &token)
@@ -176,18 +221,20 @@ void BalanceWindow::handleBalanceResponse(QNetworkReply *reply, const QString &a
 void BalanceWindow::on_btnBack_clicked()
 {
     this->hide();
-    QWidget *mainMenu = parentWidget();
-    if (mainMenu) {
-        mainMenu->show();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
     }
 }
 
 void BalanceWindow::on_btnBack_2_clicked()
 {
     this->hide();
-    QWidget *mainMenu = parentWidget();
-    if (mainMenu) {
-        mainMenu->show();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
     }
 }
 

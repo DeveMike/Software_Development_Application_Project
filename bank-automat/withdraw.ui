@@ -427,7 +427,7 @@ background-color: transparent;
 text-transform: uppercase;</string>
    </property>
    <property name="text">
-    <string>Other amount</string>
+    <string>Muu summa</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
@@ -1536,7 +1536,7 @@ background-color: transparent;
 text-transform: uppercase;</string>
    </property>
    <property name="text">
-    <string>Back</string>
+    <string>Takaisin</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
