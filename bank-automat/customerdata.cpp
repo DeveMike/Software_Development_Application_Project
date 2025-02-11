@@ -265,7 +265,12 @@ void CustomerData::onBtnUploadThumbnailClicked()
     ui->labelPinINFO->clear();
     ui->txtChangePIN->clear();
 
+    inactivityTimer->stop();
+
     QString filePath = QFileDialog::getOpenFileName(this, "Select Image", "", "Images (*.png *.jpg *.jpeg)");
+
+    inactivityTimer->start(10000);
+
     if (!filePath.isEmpty() && customerId != 0) {
         uploadNewThumbnail(customerId, filePath);
     }
