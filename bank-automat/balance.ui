@@ -1415,7 +1415,7 @@ background-color: transparent;
 text-transform: uppercase;</string>
    </property>
    <property name="text">
-    <string>0</string>
+    <string/>
    </property>
    <property name="alignment">
     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
@@ -1438,7 +1438,7 @@ background-color: transparent;
 text-transform: uppercase;</string>
    </property>
    <property name="text">
-    <string>0</string>
+    <string/>
    </property>
   </widget>
   <widget class="QLabel" name="balanceCreditLimit">
@@ -1458,7 +1458,7 @@ background-color: transparent;
 text-transform: uppercase;</string>
    </property>
    <property name="text">
-    <string>0</string>
+    <string/>
    </property>
   </widget>
   <widget class="QLabel" name="txtCredit_2">
