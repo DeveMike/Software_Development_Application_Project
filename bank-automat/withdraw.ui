@@ -23,7 +23,7 @@
     <rect>
      <x>390</x>
      <y>350</y>
-     <width>100</width>
+     <width>101</width>
      <height>51</height>
     </rect>
    </property>
@@ -1482,7 +1482,7 @@ background-color: transparent;</string>
     <rect>
      <x>740</x>
      <y>270</y>
-     <width>100</width>
+     <width>101</width>
      <height>51</height>
     </rect>
    </property>

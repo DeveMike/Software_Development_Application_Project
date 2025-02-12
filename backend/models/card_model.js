@@ -42,9 +42,9 @@ const card = {
     return db.query('DELETE FROM card WHERE idcard = ?', [id], callback);
   },
 
-  checkPin:function(idcard, callback){
-    return db.query('SELECT pin FROM card WHERE idcard = ?', [idcard], callback);
-  }
+  checkPin: function(idcard, callback){
+    return db.query("SELECT pin, status FROM card WHERE idcard = ?", [idcard], callback);
+  },
 
 };
 

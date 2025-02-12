@@ -405,7 +405,7 @@ QPushButton:pressed {
   <widget class="QLabel" name="txtDebit">
    <property name="geometry">
     <rect>
-     <x>190</x>
+     <x>180</x>
      <y>190</y>
      <width>111</width>
      <height>51</height>
@@ -570,7 +570,7 @@ QPushButton:pressed {
     <rect>
      <x>390</x>
      <y>350</y>
-     <width>100</width>
+     <width>101</width>
      <height>51</height>
     </rect>
    </property>
@@ -1089,7 +1089,7 @@ QPushButton:pressed {
     <rect>
      <x>740</x>
      <y>270</y>
-     <width>100</width>
+     <width>101</width>
      <height>51</height>
     </rect>
    </property>
@@ -1369,7 +1369,7 @@ QPushButton:pressed {
   <widget class="QLabel" name="txtCredit">
    <property name="geometry">
     <rect>
-     <x>570</x>
+     <x>580</x>
      <y>190</y>
      <width>111</width>
      <height>51</height>
