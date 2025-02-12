@@ -3,7 +3,6 @@
 #include "mainmenu.h"
 #include "cardmode.h"
 #include "ui_login.h"
-
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkReply>
@@ -83,19 +82,20 @@ void Login::checkInactivity()
 
 void Login::on_btnLogin_clicked()
 {
-    QJsonObject jsonObj;
-    jsonObj.insert("idcard", ui->numberIdcard->text());
-    jsonObj.insert("pin", ui->numberPin->text());
+    if (!timerLocked) {
+        QJsonObject jsonObj;
+        jsonObj.insert("idcard", ui->numberIdcard->text());
+        jsonObj.insert("pin", ui->numberPin->text());
 
-    QString site_url = Environment::base_url() + "/login";
-    QNetworkRequest request(site_url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        QString site_url = Environment::base_url() + "/login";
+        QNetworkRequest request(site_url);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    postManager = new QNetworkAccessManager(this);
-    connect(postManager, SIGNAL(finished(QNetworkReply*)),
-            this, SLOT(LoginSlot(QNetworkReply*)));
+        postManager = new QNetworkAccessManager(this);
+        connect(postManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(LoginSlot(QNetworkReply*)));
 
-    reply = postManager->post(request, QJsonDocument(jsonObj).toJson());
+        reply = postManager->post(request, QJsonDocument(jsonObj).toJson());
+    }
 }
 
 void Login::LoginSlot(QNetworkReply *reply)
@@ -112,8 +112,7 @@ void Login::LoginSlot(QNetworkReply *reply)
         } else {
             ui->labelInfo->setText("Server is not responding!");
         }
-    }
-    else if (response_data == "!404!") {
+    } else if (response_data == "!404!") {
         if (selectedLanguage == "FI") {
             ui->labelInfo->setText("Tietokantavirhe!");
         } else if (selectedLanguage == "SWE") {
@@ -121,9 +120,27 @@ void Login::LoginSlot(QNetworkReply *reply)
         } else {
             ui->labelInfo->setText("Database error!");
         }
-    }
-    else {
-        if (response_data != "false" && response_data.length() > 20) {
+    } else {
+        if (response_data == "locked") {
+            timerLocked = true;
+            if (selectedLanguage == "FI") {
+                ui->labelInfo->setText("Kortti on lukittu!");
+            } else if (selectedLanguage == "SWE") {
+                ui->labelInfo->setText("Kortet är låst!");
+            } else {
+                ui->labelInfo->setText("Card is locked!");
+            }
+            inactivityTimer->stop();
+            inactivityTimer->setInterval(10000);
+            QTimer::singleShot(3000, this, [this]() {
+                this->hide();
+                MainWindow *objMainWindow = new MainWindow(this);
+                objMainWindow->setGeometry(this->geometry());
+                objMainWindow->show();
+                timerLocked = false;
+            });
+            return;
+        } else if (response_data != "false" && response_data.length() > 20) {
             if (selectedLanguage == "FI") {
                 ui->labelInfo->setText("");
             } else if (selectedLanguage == "SWE") {

@@ -45,6 +45,7 @@ private:
     QByteArray response_data;
     QString selectedLanguage = "FI";
     void updateLanguage();
+    bool timerLocked = false;
     MainWindow *mainWindow;
     QString myToken;
     QNetworkAccessManager *getCardManager;
