@@ -209,6 +209,17 @@ void BalanceWindow::handleBalanceResponse(QNetworkReply *reply, const QString &a
                 creditBalance = val.toString().toDouble();
             }
             ui->balanceCredit->setText(QString::number(creditBalance));
+
+            if (obj.contains("credit_limit")) {
+                double creditLimit = 0.0;
+                QJsonValue valLimit = obj["credit_limit"];
+                if (valLimit.isDouble()) {
+                    creditLimit = valLimit.toDouble();
+                } else if (valLimit.isString()) {
+                    creditLimit = valLimit.toString().toDouble();
+                }
+                ui->balanceCreditLimit->setText(QString::number(creditLimit));
+            }
         } else {
             qDebug() << "Expected fields not found in JSON response!";
         }
@@ -244,17 +255,20 @@ void BalanceWindow::setLanguage(const QString &newLanguage)
     if (selectedLanguage == "FI") {
         ui->txtBack->setText("Takaisin");
         ui->txtDebit->setText("Debit:");
-        ui->txtCredit->setText("Credit:");
+        ui->txtCredit->setText("Luottosaldo:");
+        ui->txtCredit_2->setText("Luottoraja:");
     }
     else if (selectedLanguage == "SWE") {
         ui->txtBack->setText("Tillbaka");
         ui->txtDebit->setText("Debet:");
-        ui->txtCredit->setText("Kredit:");
+        ui->txtCredit->setText("Kreditsaldo:");
+        ui->txtCredit_2->setText("Kreditgräns:");
     }
     else if (selectedLanguage == "ENG") {
         ui->txtBack->setText("Back");
         ui->txtDebit->setText("Debit:");
-        ui->txtCredit->setText("Credit:");
+        ui->txtCredit->setText("Credit balance:");
+        ui->txtCredit_2->setText("Credit limit:");
     }
 }
 
