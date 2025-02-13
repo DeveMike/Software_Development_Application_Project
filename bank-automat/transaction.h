@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QCloseEvent>
+#include <QTableWidget>
 
 namespace Ui {
 class TransactionWindow;
@@ -25,6 +26,8 @@ public:
 
 private slots:
     void onTransactionDataReceived(QNetworkReply *reply);
+    void on_btnNext_clicked();
+    void on_btnPrev_clicked();
     void on_btnBack_clicked();
 
 protected:
@@ -34,7 +37,12 @@ private:
     Ui::TransactionWindow *ui;
     QString selectedLanguage;
     QNetworkAccessManager *networkManager;
+    QList<QJsonObject> transactionsList;
+    int currentPage;
+    const int itemsPerPage = 10;
+
     void updateLanguage();
+    void updateTransactionList();
 };
 
 #endif // TRANSACTIONWINDOW_H
