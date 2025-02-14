@@ -10,22 +10,68 @@ TransactionWindow::TransactionWindow(QWidget *parent) :
     ui->setupUi(this);
     this->setWindowTitle("ATM");
 
+    inactivityTimer = new QTimer(this);
+    inactivityTimer->setInterval(10000); // 10 sec
+    connect(inactivityTimer, &QTimer::timeout, this, &TransactionWindow::checkInactivity);
+    qApp->installEventFilter(this);
+
     connect(ui->btnNext, &QPushButton::clicked, this, &TransactionWindow::on_btnNext_clicked);
     connect(ui->btnPrev, &QPushButton::clicked, this, &TransactionWindow::on_btnPrev_clicked);
 
-    // Set table columns
     ui->tableWidget->setColumnCount(5);
     QStringList headers = {"ID", "Type", "Description", "Amount", "Timestamp"};
     ui->tableWidget->setHorizontalHeaderLabels(headers);
-    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers); // Disable editing
-    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows); // Select full row
-    ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection); // Only one selection
-    ui->tableWidget->horizontalHeader()->setStretchLastSection(true); // Last column stretches
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
+
+    ui->tableWidget->setColumnHidden(0, true);
+    ui->tableWidget->setColumnHidden(2, true);
+    ui->tableWidget->verticalHeader()->setFixedWidth(2);
 }
 
 TransactionWindow::~TransactionWindow()
 {
     delete ui;
+}
+
+void TransactionWindow::showEvent(QShowEvent *event)
+{
+    inactivityTimer->start(10000);
+    QDialog::showEvent(event);
+}
+
+void TransactionWindow::hideEvent(QHideEvent *event)
+{
+    inactivityTimer->stop();
+    inactivityTimer->setInterval(10000);
+    QDialog::hideEvent(event);
+}
+
+bool TransactionWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::MouseMove || event->type() == QEvent::MouseButtonPress)
+    {
+        inactivityTimer->start(10000);
+    }
+    return QDialog::eventFilter(obj, event);
+}
+
+void TransactionWindow::checkInactivity()
+{
+    if (!this->isVisible())
+    {
+        inactivityTimer->stop();
+        return;
+    }
+
+    this->hide();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
+    }
 }
 
 void TransactionWindow::setLanguage(const QString &newLanguage)
@@ -37,25 +83,89 @@ void TransactionWindow::setLanguage(const QString &newLanguage)
 void TransactionWindow::updateLanguage()
 {
     if (selectedLanguage == "FI") {
-        ui->btnBack->setText("Takaisin");
-        ui->btnNext->setText("Seuraava");
-        ui->btnPrev->setText("Edellinen");
+        ui->txtBack->setText("Takaisin");
+        ui->txtNext->setText("Seuraava");
+        ui->txtPrevious->setText("Edellinen");
+
+        QStringList headers = {"ID", "TYYPPI", "KUVAUS", "SUMMA", "AIKALEIMA"};
+        ui->tableWidget->setHorizontalHeaderLabels(headers);
     }
     else if (selectedLanguage == "SWE") {
-        ui->btnBack->setText("Tillbaka");
-        ui->btnNext->setText("Nästa");
-        ui->btnPrev->setText("Föregående");
+        ui->txtBack->setText("Tillbaka");
+        ui->txtNext->setText("Nästa");
+        ui->txtPrevious->setText("Föregående");
+
+        QStringList headers = {"ID", "TYP", "BESKRIVNING", "BELOPP", "TIDSSTÄMPEL"};
+        ui->tableWidget->setHorizontalHeaderLabels(headers);
     }
     else if (selectedLanguage == "ENG") {
-        ui->btnBack->setText("Back");
-        ui->btnNext->setText("Next");
-        ui->btnPrev->setText("Previous");
+        ui->txtBack->setText("Back");
+        ui->txtNext->setText("Next");
+        ui->txtPrevious->setText("Previous");
+
+        QStringList headers = {"ID", "TYPE", "DESCRIPTION", "AMOUNT", "TIMESTAMP"};
+        ui->tableWidget->setHorizontalHeaderLabels(headers);
     }
 }
 
-void TransactionWindow::fetchTransactions(const QString &idcard, const QByteArray &token)
+void TransactionWindow::fetchTransactions(const QString &idcard, const QString &cardMode, const QByteArray &token)
 {
-    QString url = Environment::base_url() + "/transaction/account/" + idcard;
+    QString url = Environment::base_url() + "/card_account?idcard=" + idcard;
+    QNetworkRequest request(url);
+    request.setRawHeader("Authorization", token);
+
+    networkManager = new QNetworkAccessManager(this);
+    connect(networkManager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *reply) {
+        onCardAccountReceived(reply, idcard, cardMode, token);
+    });
+    networkManager->get(request);
+}
+
+void TransactionWindow::onCardAccountReceived(QNetworkReply *reply, const QString &idcard, const QString &cardMode, const QByteArray &token)
+{
+    if (reply->error() != QNetworkReply::NoError) {
+        qDebug() << "Error fetching card account:" << reply->errorString();
+        reply->deleteLater();
+        return;
+    }
+
+    QByteArray responseData = reply->readAll();
+    reply->deleteLater();
+
+    qDebug() << "Raw card account data (JSON):" << responseData;
+
+    QJsonArray arr = QJsonDocument::fromJson(responseData).array();
+    if (arr.isEmpty()) {
+        qDebug() << "No account found for this card ID!";
+        return;
+    }
+
+    int selectedAccountId = -1;
+
+    for (const QJsonValue &val : arr) {
+        QJsonObject obj = val.toObject();
+        qDebug() << "Checking account:" << obj;
+
+        if (obj["type"].toString().trimmed().toLower() == cardMode.trimmed().toLower() &&
+            QString::number(obj["idcard"].toInt()) == idcard.trimmed()) {
+
+            selectedAccountId = obj["idaccount"].toInt();
+            qDebug() << "Matching account found! ID:" << selectedAccountId;
+            break;
+        }
+    }
+
+    if (selectedAccountId == -1) {
+        qDebug() << "No matching account found for mode:" << cardMode;
+        return;
+    }
+
+    fetchTransactionsByAccount(selectedAccountId, token);
+}
+
+void TransactionWindow::fetchTransactionsByAccount(int accountId, const QByteArray &token)
+{
+    QString url = Environment::base_url() + "/transaction/account/" + QString::number(accountId);
     QNetworkRequest request(url);
     request.setRawHeader("Authorization", token);
 
@@ -72,14 +182,24 @@ void TransactionWindow::onTransactionDataReceived(QNetworkReply *reply)
 
     if (reply->error() == QNetworkReply::NoError)
     {
-        qDebug() << "Transaction Data:" << responseData;
+        qDebug() << "Raw Transaction Data (JSON):" << responseData;
 
         transactionsList.clear();
-        QJsonArray transactions = QJsonDocument::fromJson(responseData).array();
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
+
+        if (!jsonDoc.isArray()) {
+            qDebug() << "Error: JSON response is not an array!";
+            return;
+        }
+
+        QJsonArray transactions = jsonDoc.array();
+        qDebug() << "Parsed JSON transactions count:" << transactions.size();
 
         for (const QJsonValue &value : transactions)
         {
-            transactionsList.append(value.toObject());
+            QJsonObject obj = value.toObject();
+            qDebug() << "Transaction:" << obj;
+            transactionsList.append(obj);
         }
 
         currentPage = 0;
@@ -104,7 +224,6 @@ void TransactionWindow::updateTransactionList()
 
         ui->tableWidget->insertRow(i - startIndex);
 
-        // Jokaiselle solulle on asetettu fontti
         QFont cellFont;
         cellFont.setPointSize(11);
 
@@ -120,7 +239,6 @@ void TransactionWindow::updateTransactionList()
         ui->tableWidget->setItem(i - startIndex, 3, new QTableWidgetItem(transaction["amount"].toString()));
         ui->tableWidget->item(i - startIndex, 3)->setFont(cellFont);
 
-        //Päivämäärä
         QString timestamp = transaction["timestamp"].toString();
         QDateTime dateTime = QDateTime::fromString(timestamp, Qt::ISODate);
         if (dateTime.isValid()) {
@@ -137,6 +255,8 @@ void TransactionWindow::updateTransactionList()
 
     ui->btnPrev->setEnabled(currentPage > 0);
     ui->btnNext->setEnabled(endIndex < transactionsList.size());
+    ui->btnNext->setEnabled(true);
+    ui->btnPrev->setEnabled(true);
 }
 
 void TransactionWindow::on_btnNext_clicked()
@@ -158,10 +278,20 @@ void TransactionWindow::on_btnPrev_clicked()
 void TransactionWindow::on_btnBack_clicked()
 {
     this->hide();
-    QWidget *mainMenu = parentWidget();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
+    }
+}
 
-    if (mainMenu) {
-        mainMenu->show();
+void TransactionWindow::on_btnBack_2_clicked()
+{
+    this->hide();
+    QWidget *parentWidget = qobject_cast<QWidget*>(parent());
+    if (parentWidget) {
+        parentWidget->setGeometry(this->geometry());
+        parentWidget->show();
     }
 }
 

@@ -277,7 +277,7 @@ void MainMenu::on_btnTransaction_clicked()
     TransactionWindow *objTransactionWindow = new TransactionWindow(this);
     objTransactionWindow->setGeometry(this->geometry());
     objTransactionWindow->setLanguage(selectedLanguage);
-    objTransactionWindow->fetchTransactions(idcard, myToken);
+    objTransactionWindow->fetchTransactions(idcard, mCardMode, myToken);
     objTransactionWindow->show();
     connect(objTransactionWindow, &TransactionWindow::finished, this, &MainMenu::show);
 }

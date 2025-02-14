@@ -6,12 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>889</width>
-    <height>660</height>
+    <width>870</width>
+    <height>640</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog, QWidget {
+    background-color: #121826;
+}</string>
   </property>
   <widget class="QPushButton" name="btn_14">
    <property name="geometry">
@@ -160,7 +165,7 @@ QPushButton:pressed {
     <rect>
      <x>390</x>
      <y>350</y>
-     <width>100</width>
+     <width>101</width>
      <height>51</height>
     </rect>
    </property>
@@ -305,7 +310,7 @@ QPushButton:pressed {
     <rect>
      <x>740</x>
      <y>270</y>
-     <width>100</width>
+     <width>101</width>
      <height>51</height>
     </rect>
    </property>
@@ -1024,7 +1029,8 @@ QPushButton:pressed {
     color: #FFFFFF;
     box-shadow: inset 0px 4px 8px rgba(0, 0, 0, 0.5);
     transform: scale(0.95);
-}</string>
+}
+</string>
    </property>
    <property name="text">
     <string>←</string>
@@ -1304,6 +1310,81 @@ QPushButton:pressed {
   <widget class="QTableWidget" name="tableWidget">
    <property name="geometry">
     <rect>
+     <x>270</x>
+     <y>30</y>
+     <width>331</width>
+     <height>291</height>
+    </rect>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LayoutDirection::LeftToRight</enum>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QTableWidget {
+	background-color: transparent;
+    padding: 10px;
+    color: #A5F3FC;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+QHeaderView::section { 
+    background-color: lightgray; 
+    color: black; 
+    font-weight: bold; 
+}
+
+QTableCornerButton::section {
+    background-color: lightgray; 
+}
+
+QTableWidget QTableView::item {
+    color: black;
+}
+
+</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Shape::StyledPanel</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="verticalScrollBarPolicy">
+    <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
+   </property>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+   </property>
+   <property name="sizeAdjustPolicy">
+    <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustIgnored</enum>
+   </property>
+   <property name="tabKeyNavigation">
+    <bool>true</bool>
+   </property>
+   <property name="alternatingRowColors">
+    <bool>false</bool>
+   </property>
+   <property name="textElideMode">
+    <enum>Qt::TextElideMode::ElideRight</enum>
+   </property>
+   <property name="showGrid">
+    <bool>true</bool>
+   </property>
+   <property name="gridStyle">
+    <enum>Qt::PenStyle::SolidLine</enum>
+   </property>
+   <property name="sortingEnabled">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QTableWidget" name="tableWidget_2">
+   <property name="geometry">
+    <rect>
      <x>160</x>
      <y>30</y>
      <width>551</width>
@@ -1342,6 +1423,112 @@ QTableWidget QTableView::item {
     <bool>true</bool>
    </property>
   </widget>
+  <widget class="QLabel" name="txtBack">
+   <property name="geometry">
+    <rect>
+     <x>550</x>
+     <y>270</y>
+     <width>141</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">font-size: 15px;
+color: white;
+font-weight: bold;
+background-color: transparent;
+text-transform: uppercase;</string>
+   </property>
+   <property name="text">
+    <string>Takaisin</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="txtNext">
+   <property name="geometry">
+    <rect>
+     <x>550</x>
+     <y>190</y>
+     <width>141</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">font-size: 15px;
+color: white;
+font-weight: bold;
+background-color: transparent;
+text-transform: uppercase;</string>
+   </property>
+   <property name="text">
+    <string>Seuraava</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="txtPrevious">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>190</y>
+     <width>141</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LayoutDirection::LeftToRight</enum>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">font-size: 15px;
+color: white;
+font-weight: bold;
+background-color: transparent;
+text-transform: uppercase;</string>
+   </property>
+   <property name="text">
+    <string>Edellinen</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+   </property>
+  </widget>
+  <zorder>tableWidget_2</zorder>
+  <zorder>tableWidget</zorder>
+  <zorder>btn_14</zorder>
+  <zorder>btnEmpty_2</zorder>
+  <zorder>btnOK</zorder>
+  <zorder>btnBack_2</zorder>
+  <zorder>cardSlot</zorder>
+  <zorder>btn_3</zorder>
+  <zorder>cardSlot_3</zorder>
+  <zorder>btnBack</zorder>
+  <zorder>cardSlotBorder</zorder>
+  <zorder>btnPrev</zorder>
+  <zorder>btn_15</zorder>
+  <zorder>btn_11</zorder>
+  <zorder>btn_7</zorder>
+  <zorder>cardSlot_2</zorder>
+  <zorder>btn_9</zorder>
+  <zorder>btn_5</zorder>
+  <zorder>btn_10</zorder>
+  <zorder>btnEmpty_4</zorder>
+  <zorder>btn_0</zorder>
+  <zorder>btn_4</zorder>
+  <zorder>btn_2</zorder>
+  <zorder>btnEmpty_7</zorder>
+  <zorder>btnNext</zorder>
+  <zorder>cardArrow</zorder>
+  <zorder>btn_6</zorder>
+  <zorder>btnEmpty_5</zorder>
+  <zorder>btn_8</zorder>
+  <zorder>btn_1</zorder>
+  <zorder>btnEmpty_3</zorder>
+  <zorder>txtBack</zorder>
+  <zorder>txtNext</zorder>
+  <zorder>txtPrevious</zorder>
  </widget>
  <resources/>
  <connections/>
