@@ -254,6 +254,9 @@ void MainMenu::on_btnTransfer_clicked()
     this->hide();
     TransferWindow *objTransferWindow = new TransferWindow(this);
     objTransferWindow->setGeometry(this->geometry());
+    objTransferWindow->setMyToken(myToken);
+    objTransferWindow->setIdcard(idcard);
+    objTransferWindow->setCardMode(mCardMode);
     objTransferWindow->setLanguage(selectedLanguage);
     objTransferWindow->show();
     connect(objTransferWindow, &TransferWindow::finished, this, &MainMenu::show);
