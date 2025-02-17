@@ -49,15 +49,15 @@ void TransferWindow::setLanguage(const QString &newLanguage)
 void TransferWindow::updateLanguage()
 {
     if (selectedLanguage == "SWE") {
-        ui->btnBack->setText("Tillbaka");
+        ui->txtBack->setText("Tillbaka");
         ui->buttonTransfer->setText("Överför");
     }
     else if (selectedLanguage == "ENG") {
-        ui->btnBack->setText("Back");
+        ui->txtBack->setText("Back");
         ui->buttonTransfer->setText("Transfer");
     }
     else {
-        ui->btnBack->setText("Takaisin");
+        ui->txtBack->setText("Takaisin");
         ui->buttonTransfer->setText("Siirrä");
     }
 }
