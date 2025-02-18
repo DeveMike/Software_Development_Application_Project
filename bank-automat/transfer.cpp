@@ -346,10 +346,6 @@ void TransferWindow::onSenderWithdrawalResponse(QNetworkReply *reply, double amo
 {
     if (reply->error() == QNetworkReply::NoError) {
         reply->deleteLater();
-        logTransaction(senderAccountId, "withdrawal", amount, "ATM Transfer Out");
-
-        ui->txtINFO->setText(translateMsg("Transfer successful") + QString(" (%1 €)").arg(amount));
-
         fetchReceiverAccountDetails(amount, receiverCardId);
     }
     else {
@@ -383,11 +379,15 @@ void TransferWindow::onFetchReceiverAccountDetailsFinished(QNetworkReply *reply,
         QJsonDocument doc = QJsonDocument::fromJson(d);
         if (!doc.isArray()) {
             ui->txtINFO->setText("Invalid JSON /card_account!");
+
+            rollbackSenderWithdrawal(senderAccountId, amount, "Rollback: Invalid JSON from recipient info");
             return;
         }
         QJsonArray arr = doc.array();
         if (arr.isEmpty()) {
             ui->txtINFO->setText("No accounts found for the recipient!");
+
+            rollbackSenderWithdrawal(senderAccountId, amount, "Rollback: recipient not found");
             return;
         }
 
@@ -448,6 +448,8 @@ void TransferWindow::onFetchReceiverAccountDetailsFinished(QNetworkReply *reply,
             } else {
                 ui->txtINFO->setText("Ei debit- tai credit-tilejä\nvastaanottajalla!");
             }
+
+            rollbackSenderWithdrawal(senderAccountId, amount, "Rollback: no valid deposit account");
         }
     }
     else {
@@ -459,6 +461,8 @@ void TransferWindow::onFetchReceiverAccountDetailsFinished(QNetworkReply *reply,
             ui->txtINFO->setText("Vastaanottajan tilitietoja ei saatu:\n" + reply->errorString());
         }
         reply->deleteLater();
+
+        rollbackSenderWithdrawal(senderAccountId, amount, "Rollback: network error fetching recipient");
     }
 }
 
@@ -563,22 +567,18 @@ void TransferWindow::onReceiverDepositResponse(QNetworkReply *reply, double amou
 {
     ui->txtDebit->setVisible(false);
     ui->txtCredit->setVisible(false);
-
     mReceiverChoiceActive = false;
 
     if (reply->error() == QNetworkReply::NoError) {
         reply->deleteLater();
 
-        ui->txtINFO->setText(
-            translateMsg("Transfer successful") + QString(" (+%1 €)").arg(amount)
-            );
-
+        logTransaction(senderAccountId, "withdrawal", amount, "ATM Transfer Out");
         logTransaction(receiverAccountId, "deposit", amount, "ATM Transfer In");
+
+        ui->txtINFO->setText(translateMsg("Transfer successful") + QString(" (+%1 €)").arg(amount));
     }
     else {
-        ui->txtINFO->setText(
-            translateMsg("Transfer update failed: ") + reply->errorString()
-            );
+        ui->txtINFO->setText(translateMsg("Transfer update failed: ") + reply->errorString());
         reply->deleteLater();
     }
 }
@@ -633,6 +633,57 @@ QString TransferWindow::translateMsg(const QString &englishMsg)
         if (englishMsg.startsWith("Transfer update failed")) return "Siirron päivitys epäonnistui";
     }
     return englishMsg;
+}
+
+void TransferWindow::rollbackSenderWithdrawal(int accountId, double amount, const QString &desc)
+{
+    QString url = Environment::base_url() + "/account/" + QString::number(accountId);
+    QNetworkRequest req(url);
+    req.setRawHeader("Authorization", mToken);
+
+    QNetworkReply *r = networkManager->get(req);
+    connect(r, &QNetworkReply::finished, this, [=]() {
+        if (r->error() == QNetworkReply::NoError) {
+            QByteArray data = r->readAll();
+            r->deleteLater();
+
+            QJsonDocument doc = QJsonDocument::fromJson(data);
+            QJsonObject obj = doc.object();
+
+            QString at = obj["type"].toString();
+            if (at == "debit") {
+                double cb = obj["debit_balance"].toString().toDouble();
+                obj["debit_balance"] = QString::number(cb + amount, 'f', 2);
+            }
+            else {
+                double cb = obj["credit_balance"].toString().toDouble();
+                obj["credit_balance"] = QString::number(cb + amount, 'f', 2);
+            }
+
+            QJsonDocument upDoc(obj);
+            QByteArray upData = upDoc.toJson();
+
+            QNetworkRequest putReq(url);
+            putReq.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+            putReq.setRawHeader("Authorization", mToken);
+
+            QNetworkReply *putReply = networkManager->sendCustomRequest(putReq, "PUT", upData);
+            connect(putReply, &QNetworkReply::finished, this, [=]() {
+                if (putReply->error() == QNetworkReply::NoError) {
+                    putReply->deleteLater();
+                    logTransaction(accountId, "rollback", amount, desc);
+                }
+                else {
+                    qDebug() << "Failed to rollback money:" << putReply->errorString();
+                    putReply->deleteLater();
+                }
+            });
+        }
+        else {
+            qDebug() << "Failed to fetch sender account for rollback:" << r->errorString();
+            r->deleteLater();
+        }
+    });
 }
 
 void TransferWindow::onDigitButtonClicked()

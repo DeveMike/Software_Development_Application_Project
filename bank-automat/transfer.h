@@ -52,6 +52,7 @@ private:
     void processReceiverDeposit(int recAccountId, double amount);
     void onReceiverDepositResponse(QNetworkReply *reply, double amount);
     void logTransaction(int accountId, const QString &type, double amount, const QString &desc);
+    void rollbackSenderWithdrawal(int accountId, double amount, const QString &desc);
 
     Ui::TransferWindow *ui;
 
