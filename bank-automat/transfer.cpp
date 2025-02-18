@@ -641,6 +641,7 @@ void TransferWindow::onDigitButtonClicked()
     if (!b) return;
 
     QString name = b->objectName();
+
     if (name == "btn_14") {
         if (ui->txtAccount->hasFocus()) {
             QString cur = ui->txtAccount->text();
@@ -659,14 +660,25 @@ void TransferWindow::onDigitButtonClicked()
         return;
     }
 
-    if (name.startsWith("btn_")) {
-        QString digit = name.right(1);
-        if (ui->txtAccount->hasFocus()) {
-            ui->txtAccount->insert(digit);
-        }
-        else if (ui->txtAmount->hasFocus()) {
-            ui->txtAmount->insert(digit);
-        }
+    QString value;
+
+    if (name == "btn_10") {
+        value = "+";
+    }
+    else if (name == "btn_11") {
+        value = "-";
+    }
+    else if (name.startsWith("btn_")) {
+        value = name.right(1);
+    } else {
+        return;
+    }
+
+    if (ui->txtAccount->hasFocus()) {
+        ui->txtAccount->insert(value);
+    }
+    else if (ui->txtAmount->hasFocus()) {
+        ui->txtAmount->insert(value);
     }
 }
 
