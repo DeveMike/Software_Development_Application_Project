@@ -135,3 +135,8 @@ The component diagram visualizes the high-level structure of the system, depicti
 The deployment diagram represents the system’s physical architecture, illustrating how software components are distributed across different hardware and network nodes.
 
 <img src="UML - Käyttöönottokaavio.png" width="500" alt="Käyttöönottokaavio">
+
+## Poster
+The poster summarising the nature of the project and its content.
+
+<img src="English Poster.png" width="500" alt="English Poster">
