@@ -136,7 +136,7 @@ The deployment diagram represents the system’s physical architecture, illustra
 
 <img src="UML - Käyttöönottokaavio.png" width="500" alt="Käyttöönottokaavio">
 
-## English Poster
-The English poster summarising the nature of the project and its content.
+## Poster
+The poster summarising the nature of the project and its content.
 
 <img src="English Poster.png" width="500" alt="English Poster">
